@@ -10,6 +10,8 @@ import (
 	"github.com/towgo/towgo/towgo"
 )
 
+type S string
+
 func init() {
 	//初始化xorm数据库驱动
 	var xormDbConfigs []xormDriver.DsnConfig
