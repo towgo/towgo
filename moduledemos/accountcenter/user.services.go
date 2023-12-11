@@ -28,3 +28,13 @@ func (u *User) BeforeCreate(session basedboperat.DbTransactionSession) error {
 
 	return nil
 }
+
+func (u *User) AfterQuery(session basedboperat.DbTransactionSession) error {
+	var userinfo Userinfo
+	err := session.Get(&userinfo, nil, "uid = ?", u.ID)
+	if err != nil {
+		return err
+	}
+	u.Userinfo = userinfo
+	return nil
+}

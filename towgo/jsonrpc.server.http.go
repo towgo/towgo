@@ -227,6 +227,10 @@ func (c *HttpRpcConnection) GUID() string {
 	return c.guid
 }
 
+func (c *HttpRpcConnection) Close() {
+
+}
+
 func (c *HttpRpcConnection) EnableHealthCheck() {
 	log.Print("http protocol is not support EnableHealthCheck function")
 }

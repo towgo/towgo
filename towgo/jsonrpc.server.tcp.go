@@ -470,6 +470,10 @@ func (c *TcpRpcConnection) GUID() string {
 	return c.guid
 }
 
+func (c *TcpRpcConnection) Close() {
+	c.conn.Close()
+}
+
 func (c *TcpRpcConnection) EnableHealthCheck() {
 }
 

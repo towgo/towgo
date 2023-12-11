@@ -56,4 +56,6 @@ type JsonRpcConnection interface {
 	DisableHealthCheck()
 
 	WriteError(code int64, msg string)
+
+	Close()
 }
