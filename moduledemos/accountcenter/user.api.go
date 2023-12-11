@@ -4,11 +4,14 @@ import (
 	"log"
 
 	"github.com/towgo/towgo/dao/basedboperat"
+	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"github.com/towgo/towgo/lib/system"
 	"github.com/towgo/towgo/towgo"
 )
 
 func init() {
+	xormDriver.Sync2(new(User), new(Userinfo), new(Userorderinfo))
+
 	towgo.SetFunc("/user/login", login)
 	towgo.SetFunc("/user/list2", list)
 }
@@ -57,6 +60,18 @@ func login(rpcConn towgo.JsonRpcConnection) {
 
 func list(rpcConn towgo.JsonRpcConnection) {
 
+	var params struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+		ID    int64  `json:"id"`
+	}
+
+	rpcConn.ReadParams(&params)
+
+	log.Print(params)
+	rpcConn.WriteResult(params)
+
+	return
 	var users []User
 
 	var user *User

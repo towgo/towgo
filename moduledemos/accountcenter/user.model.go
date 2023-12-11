@@ -11,4 +11,5 @@ type User struct {
 	Salt      string     `json:"-"`
 	Token     string     `json:"token" xorm:"-" gorm:"-"`
 	UserToken *UserToken `json:"-" gorm:"-" xorm:"-"`
+	Userinfo  Userinfo   `json:"userinfo" xorm:"-"`
 }
