@@ -86,6 +86,10 @@ func (n *NilRpcConnection) GUID() string {
 	return n.guid
 }
 
+func (n *NilRpcConnection) Close() {
+
+}
+
 func NewNilRpcConnection(rpcRequest *Jsonrpcrequest, rpcResponse *Jsonrpcresponse) JsonRpcConnection {
 	return &NilRpcConnection{
 		rpcRequest:  rpcRequest,

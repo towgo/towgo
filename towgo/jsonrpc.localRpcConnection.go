@@ -128,6 +128,10 @@ func (n *LocalRpcConnection) GUID() string {
 	return n.guid
 }
 
+func (n *LocalRpcConnection) Close() {
+
+}
+
 func NewLocalRpcConnection(rpcRequest *Jsonrpcrequest, rpcResponse *Jsonrpcresponse) JsonRpcConnection {
 	return &LocalRpcConnection{
 		rpcRequest:  rpcRequest,
