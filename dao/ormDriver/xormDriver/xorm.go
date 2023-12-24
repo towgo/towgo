@@ -16,13 +16,10 @@ import (
 	"xorm.io/xorm/names"
 )
 
-const (
-	retryCountLimit int64 = 100
-)
-
 var masterDbs sync.Map
 var slaveDbs sync.Map
-var offlineDbs sync.Map
+var offlineSlaveDbs sync.Map
+var offlineMasterDbs sync.Map
 var dbid int64 = 0
 var inited bool
 var syncBeansChan chan interface{} = make(chan interface{}, 1)
@@ -141,7 +138,7 @@ func checkDbHealthy() {
 				err := db.Engine.Ping()
 				if err != nil {
 					masterDbs.Delete(key)
-					offlineDbs.Store(db.ID, db)
+					offlineMasterDbs.Store(db.ID, db)
 				}
 				return true
 			})
@@ -151,11 +148,32 @@ func checkDbHealthy() {
 				err := db.Engine.Ping()
 				if err != nil {
 					slaveDbs.Delete(key)
-					offlineDbs.Store(db.ID, db)
+					offlineSlaveDbs.Store(db.ID, db)
 				}
 				return true
 			})
-			time.Sleep(time.Second * 60)
+
+			offlineMasterDbs.Range(func(key, value any) bool {
+				db := value.(*Db)
+				err := db.Engine.Ping()
+				if err != nil {
+					offlineMasterDbs.Delete(key)
+					masterDbs.Store(db.ID, db)
+				}
+				return true
+			})
+
+			offlineSlaveDbs.Range(func(key, value any) bool {
+				db := value.(*Db)
+				err := db.Engine.Ping()
+				if err != nil {
+					offlineSlaveDbs.Delete(key)
+					slaveDbs.Store(db.ID, db)
+				}
+				return true
+			})
+
+			time.Sleep(time.Second * 10)
 		}
 	}()
 
@@ -172,11 +190,7 @@ func Sync2(beans ...interface{}) {
 // 随机获取主数据库
 func DbMaster() *Db {
 	var db *Db
-	var retryCount int64
-	var getdbid int64 = 1
 	for {
-		// value,_:=masterDbs.Load(getdbid)
-		// db = value.(*Db)
 
 		masterDbs.Range(func(_, value any) bool {
 			db = value.(*Db)
@@ -184,12 +198,7 @@ func DbMaster() *Db {
 		})
 		if db == nil {
 			time.Sleep(time.Millisecond * 200)
-			if retryCount < retryCountLimit {
-				retryCount++
-				getdbid++
-				continue
-			}
-			log.Print("retry more to get master DB , but faild...")
+			continue
 		}
 		break
 	}
