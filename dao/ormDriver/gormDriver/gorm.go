@@ -126,7 +126,7 @@ func New(dsnConfigs []DsnConfig) {
 			log.Print(err.Error())
 			continue
 		}
-		
+
 		if v.SqlMaxIdleConns == 0 {
 			v.SqlMaxIdleConns = 10
 		}
@@ -167,19 +167,13 @@ func Sync2(beans ...interface{}) {
 // 随机获取主数据库
 func DbMaster() *Db {
 	var db *Db
-	var retryCount int64
 	for {
 		masterDbs.Range(func(_, value any) bool {
 			db = value.(*Db)
 			return false
 		})
 		if db == nil {
-			time.Sleep(time.Millisecond * 200)
-			if retryCount < retryCountLimit {
-				retryCount++
-				continue
-			}
-			log.Print("retry more to get master DB , but faild...")
+			continue
 		}
 		break
 	}
