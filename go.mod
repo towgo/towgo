@@ -5,6 +5,7 @@ go 1.18.0
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/krolaw/dhcp4 v0.0.0-20190909130307-a50d88189771
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3
