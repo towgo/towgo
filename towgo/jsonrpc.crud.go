@@ -49,6 +49,9 @@ func (c *Crud) create(rpcConn JsonRpcConnection) {
 		ctx = context.WithValue(ctx, k, v)
 	}
 
+	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
+	ctx = context.WithValue(ctx, contextKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -77,6 +80,9 @@ func (c *Crud) update(rpcConn JsonRpcConnection) {
 		ctx = context.WithValue(ctx, k, v)
 	}
 
+	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
+	ctx = context.WithValue(ctx, contextKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -104,6 +110,9 @@ func (c *Crud) delete(rpcConn JsonRpcConnection) {
 		ctx = context.WithValue(ctx, k, v)
 	}
 
+	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
+	ctx = context.WithValue(ctx, contextKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -130,6 +139,9 @@ func (c *Crud) detail(rpcConn JsonRpcConnection) {
 	for k, v := range jsonrpcCtx {
 		ctx = context.WithValue(ctx, k, v)
 	}
+
+	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
+	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
@@ -161,6 +173,9 @@ func (c *Crud) list(rpcConn JsonRpcConnection) {
 	for k, v := range jsonrpcCtx {
 		ctx = context.WithValue(ctx, k, v)
 	}
+
+	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
+	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {

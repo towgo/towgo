@@ -251,8 +251,6 @@ func (gs *GatewayServer) ProxyToEdgeServerNode(sourceRpcConn JsonRpcConnection) 
 			return
 		}
 
-		//log.Print("服务存在")
-
 		//不能删除  防止异步并发情况下 回调 id 不一致
 		sourceRequestId := sourceRpcConn.GetRpcRequest().Id
 
