@@ -15,7 +15,8 @@ type session string
 type ContextKey string
 
 const (
-	SESSION session = "jsonrpc.session"
+	SESSION                         session = "jsonrpc.session"
+	JSON_RPC_CONNECTION_CONTEXT_KEY         = "json_rpc_connection"
 )
 
 var isencryption bool
@@ -113,6 +114,7 @@ func (j *Jsonrpcrequest) Done() {
 例如一个http的jsonrpc请求 后端又是websocket的异步请求，此时如果http层不等待
 那么，http层就会出现未等待到websocket的数据返回前就关闭了客户端的连接连接，导致客户端数据丢失
 */
+
 func (j *Jsonrpcrequest) Await() {
 	<-j.Context().Done()
 }

@@ -5,7 +5,14 @@ version 2.1
 */
 package towgo
 
-import "sync"
+import (
+	"log"
+	"net/http"
+	"strings"
+	"sync"
+
+	"github.com/towgo/towgo/lib/system"
+)
 
 // 委托任务列表
 // var funcs map[string]func(JsonRpcConnection) = map[string]func(JsonRpcConnection){}
@@ -40,6 +47,38 @@ func GetMethods() (method []string) {
 		method = append(method, k)
 	}
 	return
+}
+
+func http_jsonrpc_wrapper(w http.ResponseWriter, r *http.Request) {
+
+	urlPath := r.URL.Path
+	rpcRequest := NewJsonrpcrequest()
+	rpcRequest.Method = urlPath
+	rpcRequest.Session = r.Header.Get("session")
+
+	conn := &HttpRpcConnection{
+		guid:        "HTTP:" + system.GetGUID().Hex(),
+		response:    w,
+		request:     r,
+		rpcRequest:  rpcRequest,
+		rpcResponse: NewJsonrpcresponse(),
+		httpwrapper: true,
+	}
+
+	err := defaultJsonRpcInterceptor(conn)
+	if err != nil {
+		conn.isConnected = false
+		log.Print(err.Error())
+		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
+	}
+	Exec(conn)
+}
+
+func MethodToHttpPathInterface(serveMux *http.ServeMux) {
+	for k, _ := range funcs {
+		method := "/" + strings.TrimLeft(k, "/")
+		serveMux.HandleFunc(method, http_jsonrpc_wrapper)
+	}
 }
 
 // 锁定指定method （可用于许可证到期锁定相关服务）
