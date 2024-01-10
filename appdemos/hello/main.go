@@ -11,6 +11,11 @@ import (
 	"github.com/towgo/towgo/towgo"
 )
 
+var appName string = "Account Center Module"
+var appVersion string = "1.0.0"
+
+var basePath = system.GetPathOfProgram()
+
 type S string
 
 var programPath string = system.GetPathOfProgram()
@@ -32,8 +37,6 @@ func init() {
 	configXorm.IsMaster = config.IsMaster
 	xormDbConfigs = append(xormDbConfigs, configXorm)
 	xormDriver.New(xormDbConfigs)
-
-	
 
 	//设定默认orm引擎
 	err := basedboperat.SetOrmEngine("xorm")
@@ -69,26 +72,6 @@ func setstrsarr(strs []string) {
 
 func main() {
 
-	var u1 accountcenter.User
-	var u2 *accountcenter.User
-	u2 = &accountcenter.User{}
-
-	setu1(u1)
-	setu2(u2)
-
-	log.Print("u1:", u1)
-	log.Print("u2", u2)
-
-	var strs []string
-
-	strs = append(strs, "a")
-	strs = append(strs, "b")
-	strs = append(strs, "c")
-
-	setstrsarr(strs)
-
-	log.Print(strs)
-
 	towgo.SetFunc("/hello", hello)
 	towgo.SetFunc("/login", login)
 
@@ -100,9 +83,23 @@ func main() {
 	}
 	tcpjsonrpcserver.Run()
 
-	http.HandleFunc("/jsonrpc", towgo.HttpHandller)
+	//moduleClientInit()
 
+	http.HandleFunc("/jsonrpc", towgo.HttpHandller)
+	towgo.MethodToHttpPathInterface(http.DefaultServeMux)
 	http.ListenAndServe("0.0.0.0:8080", nil)
+}
+
+func moduleClientInit() {
+	var node towgo.EdgeServerNodeConfig
+	system.ScanConfigJson(basePath+"config/togocdn.client.config.json", &node)
+	node.Methods = towgo.GetMethods()
+	node.ModuleName = appName
+	for _, v := range node.ServerUrls {
+		node.ServerUrl = v
+		client := towgo.NewEdgeServerNode(node)
+		client.Connect()
+	}
 }
 
 func hello(rpcConn towgo.JsonRpcConnection) {
@@ -111,6 +108,9 @@ func hello(rpcConn towgo.JsonRpcConnection) {
 		Bcd bool
 		Cfg int64
 	}
+
+	rpcConn.ReadParams(&hello)
+
 	rpcConn.WriteResult(hello)
 }
 

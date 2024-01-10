@@ -8,9 +8,11 @@ package towgo
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 
 type HttpRpcConnection struct {
 	guid        string
+	httpwrapper bool
 	isConnected bool
 	remoteAddr  string
 	rpcRequest  *Jsonrpcrequest
@@ -50,7 +53,20 @@ func (c *HttpRpcConnection) Write() {
 	c.rpcResponse.Timestampin = c.rpcRequest.Timestampin
 	time := time.Now().UnixNano() / 1e6
 	c.rpcResponse.Timestampout = strconv.FormatInt(time, 10)
-	mjson, _ := json.Marshal(c.rpcResponse)
+
+	var mjson []byte
+
+	if c.httpwrapper {
+		if c.rpcResponse.Error.Code == 200 {
+			mjson, _ = json.Marshal(c.rpcResponse.Result)
+		} else {
+			mjson, _ = json.Marshal(c.rpcResponse.Error)
+		}
+
+	} else {
+		mjson, _ = json.Marshal(c.rpcResponse)
+	}
+
 	if c.rpcRequest.Isencryption {
 		if isencryption {
 			code, _ := AesEncrypt(mjson)
@@ -82,6 +98,41 @@ func (c *HttpRpcConnection) Read() string {
 
 // 读取参数
 func (c *HttpRpcConnection) ReadParams(destParams ...interface{}) error {
+
+	if c.httpwrapper {
+		r := c.request
+		switch r.Method {
+		case "POST":
+			if len(c.paramsBytes) == 0 {
+				var err error
+				c.paramsBytes, err = io.ReadAll(r.Body)
+				if err != nil {
+					return err
+				}
+			}
+		case "GET":
+			for _, v := range destParams {
+
+				myStruct, err := parseQueryParams(r, reflect.TypeOf(v))
+				if err != nil {
+					return err
+				}
+
+				// 将结构体转换为JSON
+				jsonData, err := json.Marshal(myStruct)
+				if err != nil {
+					return err
+				}
+
+				err = json.Unmarshal(jsonData, v)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+
 	if len(c.paramsBytes) == 0 {
 		var err error
 		c.paramsBytes, err = json.Marshal(c.rpcRequest.Params)
@@ -89,6 +140,7 @@ func (c *HttpRpcConnection) ReadParams(destParams ...interface{}) error {
 			return err
 		}
 	}
+
 	for _, v := range destParams {
 		err := json.Unmarshal(c.paramsBytes, v)
 		if err != nil {
@@ -237,4 +289,56 @@ func (c *HttpRpcConnection) EnableHealthCheck() {
 
 func (c *HttpRpcConnection) DisableHealthCheck() {
 	log.Print("http protocol is not support DisableHealthCheck function")
+}
+
+func parseQueryParams(r *http.Request, t reflect.Type) (interface{}, error) {
+	queryValues := r.URL.Query()
+	for {
+		if t.Kind().String() == "ptr" {
+			t = t.Elem()
+		} else {
+			break
+		}
+	}
+
+	structValue := reflect.New(t).Elem()
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		fieldName := field.Name
+		fieldValue := structValue.FieldByName(fieldName)
+
+		queryParam := queryValues.Get(fieldName)
+		if queryParam == "" {
+			continue
+		}
+
+		switch fieldValue.Kind() {
+		case reflect.String:
+			fieldValue.SetString(queryParam)
+		case reflect.Bool:
+			boolValue, err := strconv.ParseBool(queryParam)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse bool value for field '%s'", fieldName)
+			}
+			fieldValue.SetBool(boolValue)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			intValue, err := strconv.ParseInt(queryParam, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse int value for field '%s'", fieldName)
+			}
+			fieldValue.SetInt(intValue)
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			uintValue, err := strconv.ParseUint(queryParam, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse uint value for field '%s'", fieldName)
+			}
+			fieldValue.SetUint(uintValue)
+		// 处理其他类型...
+		default:
+			return nil, fmt.Errorf("unsupported field type for field '%s'", fieldName)
+		}
+	}
+
+	return structValue.Interface(), nil
 }
