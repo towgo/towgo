@@ -11,9 +11,30 @@ import (
 
 func init() {
 	xormDriver.Sync2(new(User), new(Userinfo), new(Userorderinfo))
-
+	towgo.NewCRUDJsonrpcAPI("/user", User{}, []User{}).RegAPI()
 	towgo.SetFunc("/user/login", login)
 	towgo.SetFunc("/user/list2", list)
+	towgo.SetFunc("/user/get", get)
+}
+
+func update(rpcConn towgo.JsonRpcConnection) {
+	var u User
+	m := map[string]interface{}{}
+
+	rpcConn.ReadParams(&u, &m)
+	basedboperat.Update(&u, &m, "id = ?", u.ID)
+	rpcConn.WriteResult("ok")
+
+}
+
+func get(rpcConn towgo.JsonRpcConnection) {
+	var u User
+	//var us []User
+
+	var umap map[string]interface{} = map[string]interface{}{}
+
+	basedboperat.SqlQueryScan(&umap, "select * from "+u.TableName()+" where id = ?", 1)
+	rpcConn.WriteResult(umap)
 }
 
 func login(rpcConn towgo.JsonRpcConnection) {

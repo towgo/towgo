@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/towgo/towgo/dao/basedboperat"
@@ -70,10 +71,48 @@ func setstrsarr(strs []string) {
 	}
 }
 
+var writeQueue chan string = make(chan string, 1024)
+var writeBlock chan int = make(chan int, 1)
+
+func tcpReadHand(tcpClient net.Conn) {
+	for {
+		var buf []byte = make([]byte, 1024)
+		tcpClient.Read(buf)
+
+		//解析buf
+
+		//如果是响应
+		writeBlock <- 1
+	}
+}
+
+func writeHand(tcpClient net.Conn) {
+	for {
+		s := <-writeQueue
+		tcpClient.Write([]byte(s))
+		<-writeBlock
+	}
+}
+
 func main() {
+
+	tcpClient, err := net.Dial("tcp", "192.168.1.1")
+
+	go tcpReadHand(tcpClient)
+
+	go writeHand(tcpClient)
+
+	towgo.BeforExec = func(rpcConn towgo.JsonRpcConnection) {
+
+	}
+
+	towgo.AfterExec = func(rpcConn towgo.JsonRpcConnection) {
+
+	}
 
 	towgo.SetFunc("/hello", hello)
 	towgo.SetFunc("/login", login)
+	towgo.SetFunc("/create", create)
 
 	towgo.NewCRUDJsonrpcAPI("/user", accountcenter.User{}, []accountcenter.User{}).RegAPI()
 
@@ -83,7 +122,7 @@ func main() {
 	}
 	tcpjsonrpcserver.Run()
 
-	//moduleClientInit()
+	moduleClientInit()
 
 	http.HandleFunc("/jsonrpc", towgo.HttpHandller)
 	towgo.MethodToHttpPathInterface(http.DefaultServeMux)
@@ -115,5 +154,15 @@ func hello(rpcConn towgo.JsonRpcConnection) {
 }
 
 func login(rpcConn towgo.JsonRpcConnection) {
-	rpcConn.WriteResult("ok logined")
+
+}
+
+func create(rpcConn towgo.JsonRpcConnection) {
+	var m map[string]string
+	m["abc"] = "a"
+	var u accountcenter.User
+	rpcConn.ReadParams(&u)
+	basedboperat.Create(&u)
+	rpcConn.WriteResult("ok")
+
 }

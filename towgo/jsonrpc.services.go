@@ -8,10 +8,6 @@ func Call(method, token string, requestParams any, responseParams any) (err erro
 	request.Params = requestParams
 	request.Session = token
 
-	if token != "" {
-		return CallGateWay(method, token, requestParams, responseParams)
-	}
-
 	//检查本地method
 	if HasMethod(method) {
 		localRpcConn := NewLocalRpcConnection(nil, nil)

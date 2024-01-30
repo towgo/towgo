@@ -3,6 +3,7 @@ module github.com/towgo/towgo
 go 1.18.0
 
 require (
+	github.com/brian-armstrong/gpio v0.0.0-20181227042754-72b0058bbbcb
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/go-ping/ping v1.1.0
 	github.com/go-sql-driver/mysql v1.7.1

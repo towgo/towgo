@@ -24,6 +24,8 @@ var BeforExec func(rpcConn JsonRpcConnection)
 var AfterExec func(rpcConn JsonRpcConnection)
 var OnMethodNotFound func(rpcConn JsonRpcConnection)
 
+var Execmap map[string]int
+
 // 查询method是否存在
 func HasMethod(method string) bool {
 	_, ok := funcs[method]

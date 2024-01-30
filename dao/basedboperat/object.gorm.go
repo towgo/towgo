@@ -160,6 +160,10 @@ func (orm *Gorm) Update(model interface{}, fields any, condition interface{}, co
 	if err != nil {
 		return err
 	}
+	err = reflectMethodCall(model, "UpdateCheck", orm)
+	if err != nil {
+		return err
+	}
 
 	err = reflectMethodCall(model, "BeforeSave", orm)
 	if err != nil {
@@ -243,6 +247,10 @@ func (orm *Gorm) Delete(model interface{}, PrimaryKeyID interface{}, condition i
 func (orm *Gorm) Create(model interface{}) (int64, error) {
 	orm.WithValue("parent_dboperat_function", "Create")
 	err := reflectMethodCall(model, "InputCheck", orm)
+	if err != nil {
+		return 0, err
+	}
+	err = reflectMethodCall(model, "CreateCheck", orm)
 	if err != nil {
 		return 0, err
 	}
