@@ -31,6 +31,7 @@ type WebScoketClient struct {
 	OnConnect              func(*WebScoketClient)
 	OnClose                func(*WebScoketClient)
 	healCheckCancel        context.CancelFunc
+	pingTimeOut            int64
 }
 
 // 关闭心跳检测
@@ -39,6 +40,10 @@ func (wsc *WebScoketClient) DisableHealthCheck() {
 		wsc.healCheckCancel()
 		wsc.healCheckCancel = nil
 	}
+}
+
+func (wsc *WebScoketClient) AutoReConnect(connect bool) {
+	wsc.autoReConnect = connect
 }
 
 // 心跳检测
@@ -62,12 +67,10 @@ func (wsc *WebScoketClient) EnableHealthCheck() {
 				})
 
 				//指定的时间后没有收到响应 ， 认为对方已经断线， 关闭socket连接
-				time.Sleep(time.Second * 5)
+				time.Sleep(time.Second * time.Duration(wsc.pingTimeOut))
 				if !hasResponse {
 					log.Print(" -> 服务端链路失去响应,主动断开连接")
-
 					rpcConn.Close()
-
 					return
 				}
 			}
@@ -82,9 +85,14 @@ func NewWebsocketClient(url, origin string) *WebScoketClient {
 		url:           url,
 		origin:        origin,
 		autoReConnect: true,
+		pingTimeOut:   10,
 	}
 
 	return wsc
+}
+
+func (wsc *WebScoketClient) SetPingTimeOut(second int64) {
+	wsc.pingTimeOut = second
 }
 
 func (wsc *WebScoketClient) Close() {
@@ -195,11 +203,14 @@ func clientConnHandler(wsc *WebScoketClient) {
 		} else { //rpc请求
 			//委托任务
 			go func(tmpRpcConn *WebSocketRpcConnection) {
-				defer func() {
-					if err := recover(); err != nil {
-						log.Printf("error: %s\n", err)
+				defer func(tmpRpcConn *WebSocketRpcConnection) {
+					err := recover()
+					if err != nil {
+						log.Print(err)
+						tmpRpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+						tmpRpcConn.request.Done()
 					}
-				}()
+				}(tmpRpcConn)
 				err := defaultJsonRpcInterceptor(tmpRpcConn)
 				if err != nil {
 					log.Print(fmt.Errorf("请求被拦截:%w", err))

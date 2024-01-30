@@ -60,6 +60,11 @@ func TCPServiceHandller(tcpConn *TcpConn, data string, rpcConn *TcpRpcConnection
 	if rpcConn == nil {
 		return
 	}
+	defer func(rpcConn JsonRpcConnection) {
+		err := recover()
+		log.Print(err)
+		rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+	}(rpcConn)
 	rpcConn.AnalysisByString(data)
 	//运行拦截器
 	err := defaultJsonRpcInterceptor(rpcConn)
