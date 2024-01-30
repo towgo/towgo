@@ -1,7 +1,6 @@
 package towgo
 
 import (
-	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -138,7 +137,6 @@ func (lb *LoadBalance) LoadPriority(method string) JsonRpcConnection {
 
 func (lb *LoadBalance) RandPickRestfulProxy(r *http.Request) *EdgeServerNodeHttpRoute {
 
-	log.Print(r.URL.Path)
 	es := lb.LoadRandHttpRestful(r.URL.Path)
 
 	//完全匹配未命中

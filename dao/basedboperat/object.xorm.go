@@ -172,6 +172,11 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 		return err
 	}
 
+	err = reflectMethodCall(model, "UpdateCheck", orm)
+	if err != nil {
+		return err
+	}
+
 	err = reflectMethodCall(model, "BeforeSave", orm)
 	if err != nil {
 		return err
@@ -250,21 +255,23 @@ func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition i
 // 创建记录
 func (orm *Xorm) Create(model interface{}) (int64, error) {
 	orm.WithValue("parent_dboperat_function", "Create")
+
 	err := reflectMethodCall(model, "InputCheck", orm)
 	if err != nil {
 		return 0, err
 	}
+	err = reflectMethodCall(model, "CreateCheck", orm)
+	if err != nil {
+		return 0, err
+	}
+
 	err = reflectMethodCall(model, "BeforeCreate", orm)
 	if err != nil {
 		return 0, err
 	}
-	err = reflectMethodCall(model, "BeforeSave", orm)
-	if err != nil {
-		return 0, err
-	}
+
 	defer func() {
 		reflectMethodCall(model, "AfterCreate", orm)
-		reflectMethodCall(model, "AfterSave", orm)
 	}()
 	var session *xorm.Session
 	if orm.session != nil {
