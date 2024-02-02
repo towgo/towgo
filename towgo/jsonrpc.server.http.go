@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/towgo/towgo/lib/system"
@@ -31,6 +32,15 @@ type HttpRpcConnection struct {
 	bodyStr     string
 	paramsBytes []byte
 	resultBytes []byte
+	sync.Map
+}
+
+func (c *HttpRpcConnection) SetValue(key string, value any) {
+	c.Store(key, value)
+}
+
+func (c *HttpRpcConnection) GetValue(key string) (value any, ok bool) {
+	return c.Load(key)
 }
 
 func (c *HttpRpcConnection) WriteError(code int64, msg string) {
@@ -256,8 +266,10 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 
 	defer func(rpcConn JsonRpcConnection) {
 		err := recover()
-		log.Print(err)
-		rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+		if err != nil {
+			log.Print(err)
+			rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+		}
 	}(rpcConn)
 
 	if rpcConn == nil {
