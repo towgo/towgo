@@ -3,6 +3,7 @@ package towgo
 import (
 	"encoding/json"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/towgo/towgo/lib/system"
@@ -12,6 +13,15 @@ type LocalRpcConnection struct {
 	guid        string
 	rpcRequest  *Jsonrpcrequest
 	rpcResponse *Jsonrpcresponse
+	sync.Map
+}
+
+func (w *LocalRpcConnection) SetValue(key string, value any) {
+	w.Store(key, value)
+}
+
+func (w *LocalRpcConnection) GetValue(key string) (value any, ok bool) {
+	return w.Load(key)
 }
 
 func (n *LocalRpcConnection) WriteError(code int64, msg string) {

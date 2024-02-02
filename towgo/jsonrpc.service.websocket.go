@@ -50,6 +50,7 @@ type WebSocketRpcConnection struct {
 	requestCallBackCancels *sync.Map
 	healCheckCancel        context.CancelFunc
 	pintTimeOut            int64
+	*sync.Map
 }
 
 type RpcCallback struct {
@@ -74,6 +75,14 @@ func NewWebsocketServer() *WebSocketServer {
 	return w
 }
 
+func (w *WebSocketRpcConnection) SetValue(key string, value any) {
+	w.Store(key, value)
+}
+
+func (w *WebSocketRpcConnection) GetValue(key string) (value any, ok bool) {
+	return w.Load(key)
+}
+
 func (w *WebSocketRpcConnection) WriteError(code int64, msg string) {
 	w.response.Error.Set(code, msg)
 	w.Write()
@@ -88,6 +97,7 @@ func (w *WebSocketRpcConnection) Duplicate() (new *WebSocketRpcConnection) {
 	new.rpcCallBackFuncs = w.rpcCallBackFuncs
 	new.requestCallBackCancels = w.requestCallBackCancels
 	new.healCheckCancel = w.healCheckCancel
+	new.Map = w.Map
 	return
 }
 
@@ -279,6 +289,7 @@ func NewWebSocketRpcConnection(ws *websocket.Conn) *WebSocketRpcConnection {
 		lock:                   &sync.Mutex{},
 		rpcCallBackFuncs:       &sync.Map{},
 		requestCallBackCancels: &sync.Map{},
+		Map:                    &sync.Map{},
 	}
 }
 

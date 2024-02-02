@@ -1,11 +1,24 @@
 package towgo
 
-import "github.com/towgo/towgo/lib/system"
+import (
+	"sync"
+
+	"github.com/towgo/towgo/lib/system"
+)
 
 type NilRpcConnection struct {
 	guid        string
 	rpcRequest  *Jsonrpcrequest
 	rpcResponse *Jsonrpcresponse
+	sync.Map
+}
+
+func (w *NilRpcConnection) SetValue(key string, value any) {
+	w.Store(key, value)
+}
+
+func (w *NilRpcConnection) GetValue(key string) (value any, ok bool) {
+	return w.Load(key)
 }
 
 func (n *NilRpcConnection) WriteError(code int64, msg string) {
