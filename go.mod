@@ -7,8 +7,10 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/go-ping/ping v1.1.0
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/goburrow/modbus v0.1.0
 	github.com/krolaw/dhcp4 v0.0.0-20190909130307-a50d88189771
 	github.com/lib/pq v1.10.9
+	github.com/linklayer/go-socketcan v0.0.0-20190403144728-e9fc2da5204c
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3
 	github.com/stretchr/testify v1.8.4
@@ -25,6 +27,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/goburrow/serial v0.1.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect

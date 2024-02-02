@@ -58,4 +58,7 @@ type JsonRpcConnection interface {
 	WriteError(code int64, msg string)
 
 	Close()
+
+	SetValue(key string, value any)
+	GetValue(key string) (value any, ok bool)
 }

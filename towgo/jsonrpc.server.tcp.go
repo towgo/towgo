@@ -54,6 +54,7 @@ type TcpRpcConnection struct {
 	bodyStr                string
 	paramsBytes            []byte
 	resultBytes            []byte
+	sync.Map
 }
 
 func TCPServiceHandller(tcpConn *TcpConn, data string, rpcConn *TcpRpcConnection) {
@@ -62,8 +63,10 @@ func TCPServiceHandller(tcpConn *TcpConn, data string, rpcConn *TcpRpcConnection
 	}
 	defer func(rpcConn JsonRpcConnection) {
 		err := recover()
-		log.Print(err)
-		rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+		if err != nil {
+			log.Print(err)
+			rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+		}
 	}(rpcConn)
 	rpcConn.AnalysisByString(data)
 	//运行拦截器
@@ -295,6 +298,14 @@ func NewTcpRpcConnection(conn net.Conn, bodyStr string) *TcpRpcConnection {
 	}
 
 	return rpcConn
+}
+
+func (c *TcpRpcConnection) SetValue(key string, value any) {
+	c.Store(key, value)
+}
+
+func (c *TcpRpcConnection) GetValue(key string) (value any, ok bool) {
+	return c.Load(key)
 }
 
 func (c *TcpRpcConnection) WriteError(code int64, msg string) {
