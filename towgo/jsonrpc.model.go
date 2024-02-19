@@ -11,13 +11,12 @@ import (
 	"sync"
 )
 
-type session string
 type ContextKey string
 
 const (
-	SESSION                         session = "jsonrpc.session"
-	JSON_RPC_CONNECTION_CONTEXT_KEY         = "json_rpc_connection"
-	DEFAULT_ERROR_MSG                       = "网络开小差了"
+	SESSION                         = "jsonrpc.session"
+	JSON_RPC_CONNECTION_CONTEXT_KEY = "json_rpc_connection"
+	DEFAULT_ERROR_MSG               = "网络开小差了"
 )
 
 var isencryption bool

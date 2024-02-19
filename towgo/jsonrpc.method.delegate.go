@@ -1,7 +1,7 @@
 /*
 json rpc 2.0 方法委托
 by:liangliangit
-version 2.1
+version 2.2
 */
 package towgo
 
@@ -17,7 +17,7 @@ import (
 // 委托任务列表
 // var funcs map[string]func(JsonRpcConnection) = map[string]func(JsonRpcConnection){}
 var lock sync.Mutex
-var funcs map[string]func(JsonRpcConnection) = map[string]func(JsonRpcConnection){}
+var funcs map[string]*Api = map[string]*Api{}
 var lockedMethods sync.Map
 
 var BeforExec func(rpcConn JsonRpcConnection)
@@ -25,6 +25,44 @@ var AfterExec func(rpcConn JsonRpcConnection)
 var OnMethodNotFound func(rpcConn JsonRpcConnection)
 
 var Execmap map[string]int
+
+// 接口对象
+type Api struct {
+	method              string
+	f                   func(JsonRpcConnection)
+	interceptorHandller []func(conn JsonRpcConnection) error
+}
+
+func (a *Api) Method() string {
+	return a.method
+}
+
+func (a *Api) Exec(rpcConn JsonRpcConnection) {
+
+	//运行拦截器
+	err := a.interceptor(rpcConn)
+	if err != nil {
+		rpcConn.WriteError(500, err.Error())
+		return
+	}
+
+	//运行方法
+	a.f(rpcConn)
+}
+
+func (a *Api) AddInterceptor(args ...func(conn JsonRpcConnection) error) {
+	a.interceptorHandller = append(a.interceptorHandller, args...)
+}
+
+func (a *Api) interceptor(rpcConn JsonRpcConnection) error {
+	for _, v := range a.interceptorHandller {
+		err := v(rpcConn)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // 查询method是否存在
 func HasMethod(method string) bool {
@@ -36,7 +74,7 @@ func HasMethod(method string) bool {
 func AddMethodHead(methodHead string) {
 	lock.Lock()
 	defer lock.Unlock()
-	var newmap map[string]func(JsonRpcConnection) = map[string]func(JsonRpcConnection){}
+	var newmap map[string]*Api = map[string]*Api{}
 	for k, v := range funcs {
 		newmap[methodHead+k] = v
 	}
@@ -76,6 +114,7 @@ func http_jsonrpc_wrapper(w http.ResponseWriter, r *http.Request) {
 	Exec(conn)
 }
 
+// 将jsonrpc method路由接口兼容为HTTP路由接口 兼容restful风格
 func MethodToHttpPathInterface(serveMux *http.ServeMux) {
 	for k, _ := range funcs {
 		method := "/" + strings.TrimLeft(k, "/")
@@ -115,10 +154,15 @@ func MethodUnlockAll(excludeMethods ...string) {
 }
 
 // 设定委托任务
-func SetFunc(method string, f func(JsonRpcConnection)) {
+func SetFunc(method string, f func(JsonRpcConnection)) *Api {
 	lock.Lock()
 	defer lock.Unlock()
-	funcs[method] = f
+	api := &Api{
+		method: method,
+		f:      f,
+	}
+	funcs[method] = api
+	return api
 }
 
 // 委托执行任务
@@ -148,7 +192,7 @@ func Exec(rpcConn JsonRpcConnection) {
 		return
 	}
 
-	methodFunc, exists := funcs[rpcRequest.Method]
+	api, exists := funcs[rpcRequest.Method]
 	// 判断委托是否存在
 	if !exists {
 		//如果注册了Method not found处理函数  不进行默认响应
@@ -163,7 +207,7 @@ func Exec(rpcConn JsonRpcConnection) {
 	}
 
 	// 执行委托的程序
-	methodFunc(rpcConn)
+	api.Exec(rpcConn)
 	if AfterExec != nil {
 		AfterExec(rpcConn)
 	}
