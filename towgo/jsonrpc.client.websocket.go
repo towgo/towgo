@@ -69,7 +69,7 @@ func (wsc *WebScoketClient) EnableHealthCheck() {
 				//指定的时间后没有收到响应 ， 认为对方已经断线， 关闭socket连接
 				time.Sleep(time.Second * time.Duration(wsc.pingTimeOut))
 				if !hasResponse {
-					log.Print(" -> 服务端链路失去响应,主动断开连接")
+					log.Print("服务端链路失去响应,主动断开连接", " timeout ", wsc.pingTimeOut, " second")
 					rpcConn.Close()
 					return
 				}
