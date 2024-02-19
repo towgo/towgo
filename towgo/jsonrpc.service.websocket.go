@@ -247,7 +247,7 @@ func (wsrc *WebSocketRpcConnection) EnableHealthCheck() {
 				//指定的时间后没有收到响应 ， 认为对方已经断线， 关闭socket连接
 				time.Sleep(time.Second * time.Duration(wsrc.pintTimeOut))
 				if !hasResponse {
-					log.Print(rpcConn.GUID() + " -> 链路失去响应,主动断开连接")
+					log.Print(rpcConn.GUID()+" -> 链路失去响应,主动断开连接", " timeout ", wsrc.pintTimeOut, " second")
 
 					rpcConn.Close()
 
