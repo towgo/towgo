@@ -60,7 +60,7 @@ func (wsc *WebScoketClient) EnableHealthCheck() {
 				return
 			default:
 				request := NewJsonrpcrequest()
-				request.Method = "ping"
+				request.Method = TOWGO_WEBSOCKET_PING
 				var hasResponse bool
 				rpcConn.Call(request, func(jrc JsonRpcConnection) {
 					hasResponse = true
