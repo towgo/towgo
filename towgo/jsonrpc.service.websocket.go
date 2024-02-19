@@ -21,6 +21,10 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+const (
+	TOWGO_WEBSOCKET_PING = "towgo.websocket.ping"
+)
+
 var DefaultWebSocketServer *WebSocketServer
 var clientCallTimeOut int64 = 600
 
@@ -59,6 +63,9 @@ type RpcCallback struct {
 }
 
 func init() {
+	SetFunc(TOWGO_WEBSOCKET_PING, func(jrc JsonRpcConnection) {
+		jrc.WriteResult("pong")
+	})
 	DefaultWebSocketServer = NewWebsocketServer()
 }
 
@@ -240,7 +247,7 @@ func (wsrc *WebSocketRpcConnection) EnableHealthCheck() {
 				return
 			default:
 				request := NewJsonrpcrequest()
-				request.Method = "ping"
+				request.Method = TOWGO_WEBSOCKET_PING
 				var hasResponse bool
 				rpcConn.Call(request, func(jrc JsonRpcConnection) {
 					hasResponse = true
