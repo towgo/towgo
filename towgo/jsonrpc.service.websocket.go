@@ -28,7 +28,7 @@ type WebSocketServer struct {
 	instantRequest           int64
 	regOnConnectFuncLock     sync.Mutex
 	regOnCloseFuncLock       sync.Mutex
-	pintTimeOut              int64
+	pingTimeOut              int64
 	wsOnConnectCallFuncs     []func(rpcConn JsonRpcConnection)
 	wsOnCloseCallFuncs       []func(rpcConn JsonRpcConnection)
 	WebsocketServiceHandller websocket.Handler
@@ -49,7 +49,7 @@ type WebSocketRpcConnection struct {
 	rpcCallBackFuncs       *sync.Map
 	requestCallBackCancels *sync.Map
 	healCheckCancel        context.CancelFunc
-	pintTimeOut            int64
+	pingTimeOut            int64
 	*sync.Map
 }
 
@@ -69,7 +69,7 @@ func SetClientCallTimeOut(second int64) {
 func NewWebsocketServer() *WebSocketServer {
 	w := &WebSocketServer{
 		healthCheckCancel: &sync.Map{},
-		pintTimeOut:       10,
+		pingTimeOut:       10,
 	}
 	w.WebsocketServiceHandller = w.preHandller
 	return w
@@ -92,6 +92,7 @@ func (w *WebSocketRpcConnection) Duplicate() (new *WebSocketRpcConnection) {
 	new = NewWebSocketRpcConnection(w.wsConn)
 	new.guid = w.guid
 	new.lock = w.lock
+	new.pingTimeOut = w.pingTimeOut
 	new.messageChan = w.messageChan
 	new.isConnected = w.isConnected
 	new.rpcCallBackFuncs = w.rpcCallBackFuncs
@@ -102,13 +103,14 @@ func (w *WebSocketRpcConnection) Duplicate() (new *WebSocketRpcConnection) {
 }
 
 func (w *WebSocketServer) SetPingTimeOut(second int64) {
-	w.pintTimeOut = second
+	w.pingTimeOut = second
 }
 
 func (w *WebSocketServer) preHandller(ws *websocket.Conn) {
 
 	ws.MaxPayloadBytes = 1024 * 1024 * 100 //最大传输数据
 	rpcConn := NewWebSocketRpcConnection(ws)
+	rpcConn.pingTimeOut = w.pingTimeOut
 	rpcConn.isConnected = true
 	w.onConnect(rpcConn)
 
@@ -245,9 +247,9 @@ func (wsrc *WebSocketRpcConnection) EnableHealthCheck() {
 				})
 
 				//指定的时间后没有收到响应 ， 认为对方已经断线， 关闭socket连接
-				time.Sleep(time.Second * time.Duration(wsrc.pintTimeOut))
+				time.Sleep(time.Second * time.Duration(wsrc.pingTimeOut))
 				if !hasResponse {
-					log.Print(rpcConn.GUID()+" -> 链路失去响应,主动断开连接", " timeout ", wsrc.pintTimeOut, " second")
+					log.Print(rpcConn.GUID()+" -> 链路失去响应,主动断开连接", " timeout ", wsrc.pingTimeOut, " second")
 
 					rpcConn.Close()
 
@@ -259,7 +261,7 @@ func (wsrc *WebSocketRpcConnection) EnableHealthCheck() {
 }
 
 func (w *WebSocketRpcConnection) SetPingTimeOut(second int64) {
-	w.pintTimeOut = second
+	w.pingTimeOut = second
 }
 
 // 关闭心跳检测
