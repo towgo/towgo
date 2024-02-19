@@ -26,6 +26,11 @@ const (
 
 type Crud struct {
 	baseMethod   string
+	CreateApi    *Api
+	DeleteApi    *Api
+	UpdateApi    *Api
+	DetailApi    *Api
+	ListApi      *Api
 	modelObject  interface{}
 	modelObjects interface{}
 }
@@ -208,15 +213,15 @@ func (c *Crud) regAPI(CRUD_FLAG ...string) {
 	for _, v := range CRUD_FLAG {
 		switch v {
 		case CRUD_FLAG_CREATE:
-			SetFunc(c.baseMethod+"/create", c.create)
+			c.CreateApi = SetFunc(c.baseMethod+"/create", c.create)
 		case CRUD_FLAG_DELETE:
-			SetFunc(c.baseMethod+"/delete", c.delete)
+			c.DeleteApi = SetFunc(c.baseMethod+"/delete", c.delete)
 		case CRUD_FLAG_DETAIL:
-			SetFunc(c.baseMethod+"/detail", c.detail)
+			c.DetailApi = SetFunc(c.baseMethod+"/detail", c.detail)
 		case CRUD_FLAG_LIST:
-			SetFunc(c.baseMethod+"/list", c.list)
+			c.ListApi = SetFunc(c.baseMethod+"/list", c.list)
 		case CRUD_FLAG_UPDATE:
-			SetFunc(c.baseMethod+"/update", c.update)
+			c.UpdateApi = SetFunc(c.baseMethod+"/update", c.update)
 		}
 	}
 }
