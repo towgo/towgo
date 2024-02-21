@@ -209,6 +209,49 @@ func (c *Crud) RegAPI(CRUD_FLAG ...string) {
 	c.regAPI(CRUD_FLAG...)
 }
 
+/*
+reg jsonrpc method
+if CRUD_FLAG is null ,Will Reg All Method
+*/
+func (c *Crud) AddInterceptor(f func(conn JsonRpcConnection) error, CRUD_FLAG ...string) {
+	if CRUD_FLAG == nil {
+		c.addInterceptor(f, CRUD_FLAG_CREATE, CRUD_FLAG_DELETE, CRUD_FLAG_DETAIL, CRUD_FLAG_LIST, CRUD_FLAG_UPDATE)
+		return
+	}
+	c.addInterceptor(f, CRUD_FLAG...)
+}
+
+func (c *Crud) addInterceptor(f func(conn JsonRpcConnection) error, CRUD_FLAG ...string) {
+	for _, v := range CRUD_FLAG {
+		switch v {
+		case CRUD_FLAG_CREATE:
+			if c.CreateApi != nil {
+				c.CreateApi.AddInterceptor(f)
+			}
+
+		case CRUD_FLAG_DELETE:
+			if c.DeleteApi != nil {
+				c.DeleteApi.AddInterceptor(f)
+			}
+
+		case CRUD_FLAG_DETAIL:
+			if c.DetailApi != nil {
+				c.DetailApi.AddInterceptor(f)
+			}
+
+		case CRUD_FLAG_LIST:
+			if c.ListApi != nil {
+				c.ListApi.AddInterceptor(f)
+			}
+
+		case CRUD_FLAG_UPDATE:
+			if c.UpdateApi != nil {
+				c.UpdateApi.AddInterceptor(f)
+			}
+		}
+	}
+}
+
 func (c *Crud) regAPI(CRUD_FLAG ...string) {
 	for _, v := range CRUD_FLAG {
 		switch v {
