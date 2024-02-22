@@ -165,6 +165,12 @@ func SetFunc(method string, f func(JsonRpcConnection)) *Api {
 	return api
 }
 
+func RemoveFunc(method string) {
+	lock.Lock()
+	defer lock.Unlock()
+	delete(funcs, method)
+}
+
 // 委托执行任务
 func Exec(rpcConn JsonRpcConnection) {
 	if BeforExec != nil {

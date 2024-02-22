@@ -97,7 +97,7 @@ func (c *EdgeServerNode) Call(request *Jsonrpcrequest, callback func(JsonRpcConn
 
 func (c *EdgeServerNode) regModule() {
 	request := NewJsonrpcrequest()
-	request.Method = "/togocdn/edgeServerNode/reg"
+	request.Method = "/towgocdn/edgeServerNode/reg"
 	request.Params = c.EdgeServerNodeConfig
 	c.websocketConn.Push(request)
 }

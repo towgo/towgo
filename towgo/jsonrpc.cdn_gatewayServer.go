@@ -37,9 +37,9 @@ type GatewayEdgeServerNode struct {
 }
 
 func InitServerApi() {
-	SetFunc("/togocdn/edgeServerNode/reg", reg)
-	SetFunc("/togocdn/getEdgeServerNodeInfo", getEdgeServerNodeInfo)
-	SetFunc("/togocdn/edgeServerNode/ping", ping)
+	SetFunc("/towgocdn/edgeServerNode/reg", reg)
+	SetFunc("/towgocdn/getEdgeServerNodeInfo", getEdgeServerNodeInfo)
+	SetFunc("/towgocdn/edgeServerNode/ping", ping)
 }
 
 var gateWayServers []*GatewayServer
