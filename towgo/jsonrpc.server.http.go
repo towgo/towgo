@@ -267,7 +267,7 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 	defer func(rpcConn JsonRpcConnection) {
 		err := recover()
 		if err != nil {
-			log.Print(err)
+			log.Print(DEFAULT_ERROR_MSG, err)
 			rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 		}
 	}(rpcConn)

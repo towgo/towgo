@@ -206,7 +206,7 @@ func clientConnHandler(wsc *WebScoketClient) {
 				defer func(tmpRpcConn *WebSocketRpcConnection) {
 					err := recover()
 					if err != nil {
-						log.Print(err)
+						log.Print(DEFAULT_ERROR_MSG, err)
 						tmpRpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 						tmpRpcConn.request.Done()
 					}
