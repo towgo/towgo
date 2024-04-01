@@ -92,6 +92,42 @@ func (lb *LoadBalance) StoreHttpJsonrpcMethod(method string, rpcConn JsonRpcConn
 }
 
 // 新增jsonrpc 长连接路由 (tcp 或 websocket)
+func (lb *LoadBalance) StoreJsonrpcKeepaliveMethods(methods []string, rpcConn JsonRpcConnection, priority int64) {
+	lb.Lock()
+	defer lb.Unlock()
+
+	for _, method := range methods {
+
+		//增加随机路由
+		connMapInterface, ok := lb.methodWebsocketJsonrpcRandConnMap.Load(method)
+		var connMap *sync.Map
+		if ok {
+			connMap = connMapInterface.(*sync.Map)
+		} else {
+			connMap = &sync.Map{}
+		}
+		connMap.Store(rpcConn.GUID(), rpcConn)
+		lb.methodWebsocketJsonrpcRandConnMap.Store(method, connMap)
+
+		//增加优先级路由
+		connMapPriorityInterface, ok := lb.methodWebsocketJsonrpcConnMapPriority.Load(method)
+		var connMapPriority LoadBalancePrioritys
+		l := &LoadBalancePriority{}
+		l.Priority = priority
+		l.RpcConn = rpcConn
+		if ok {
+			connMapPriority = connMapPriorityInterface.(LoadBalancePrioritys)
+			connMapPriority = append(connMapPriority, l)
+			sort.Sort(connMapPriority)
+		} else {
+			connMapPriority = append(connMapPriority, l)
+		}
+		lb.methodWebsocketJsonrpcConnMapPriority.Store(method, connMapPriority)
+	}
+
+}
+
+// 新增jsonrpc 长连接路由 (tcp 或 websocket)
 func (lb *LoadBalance) StoreJsonrpcKeepaliveMethod(method string, rpcConn JsonRpcConnection, priority int64) {
 	lb.Lock()
 	defer lb.Unlock()
@@ -121,7 +157,6 @@ func (lb *LoadBalance) StoreJsonrpcKeepaliveMethod(method string, rpcConn JsonRp
 		connMapPriority = append(connMapPriority, l)
 	}
 	lb.methodWebsocketJsonrpcConnMapPriority.Store(method, connMapPriority)
-
 }
 
 func (lb *LoadBalance) LoadPriority(method string) JsonRpcConnection {
