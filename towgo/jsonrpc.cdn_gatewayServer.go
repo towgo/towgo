@@ -40,9 +40,21 @@ func InitServerApi() {
 	SetFunc("/towgocdn/edgeServerNode/reg", reg)
 	SetFunc("/towgocdn/getEdgeServerNodeInfo", getEdgeServerNodeInfo)
 	SetFunc("/towgocdn/edgeServerNode/ping", ping)
+	SetFunc("/towgocdn/edgeServerNode/method/jsonrpcroute/list", edgeServerNodeMethodJsonrpcRouteList)
 }
 
 var gateWayServers []*GatewayServer
+
+func edgeServerNodeMethodJsonrpcRouteList(rpcConn JsonRpcConnection) {
+	var w []string
+	for _, gatewayServer := range gateWayServers {
+		gatewayServer.loadbalance.methodWebsocketJsonrpcRandConnMap.Range(func(key, value any) bool {
+			w = append(w, key.(string))
+			return true
+		})
+	}
+	rpcConn.WriteResult(w)
+}
 
 func NewGatewayServer() *GatewayServer {
 	s := &GatewayServer{
@@ -146,6 +158,9 @@ func togocdn_http_edge_server_node_reg(rpcConn JsonRpcConnection) {
 }
 
 func togocdn_websocket_edge_server_node_reg(rpcConn JsonRpcConnection) {
+	if !rpcConn.IsConnected() {
+		return
+	}
 	var node GatewayEdgeServerNode
 	rpcConn.ReadParams(&node)
 
@@ -165,14 +180,13 @@ func togocdn_websocket_edge_server_node_reg(rpcConn JsonRpcConnection) {
 		gatewayServer.edgeServerNodeWebsocketMap.Store(rpcConn.GUID(), node)
 	}
 
-	for _, v := range node.EdgeServerNodeConfig.Methods {
-		for _, gatewayServer := range gateWayServers {
-			if node.EdgeServerNodeConfig.ClusterToken != gatewayServer.clusterToken {
-				continue
-			}
-			gatewayServer.loadbalance.StoreJsonrpcKeepaliveMethod(v, rpcConn, node.EdgeServerNodeConfig.Priority)
+	for _, gatewayServer := range gateWayServers {
+		if node.EdgeServerNodeConfig.ClusterToken != gatewayServer.clusterToken {
+			continue
 		}
+		gatewayServer.loadbalance.StoreJsonrpcKeepaliveMethods(node.EdgeServerNodeConfig.Methods, rpcConn, node.EdgeServerNodeConfig.Priority)
 	}
+
 	rpcConn.WriteResult("ok")
 }
 
