@@ -187,13 +187,18 @@ func (w *WebSocketServer) preHandller(ws *websocket.Conn) {
 			//委托任务
 			go func(tmpRpcConn *WebSocketRpcConnection) {
 
-				defer func(tmpRpcConn *WebSocketRpcConnection) {
-					err := recover()
-					if err != nil {
-						log.Print(DEFAULT_ERROR_MSG, err)
+				defer func(CtmpRpcConn *WebSocketRpcConnection) {
+
+					r := recover()
+					if r != nil {
+						if err, ok := r.(error); ok {
+							fmt.Println(DEFAULT_ERROR_MSG, err)
+						}
+						//log.Println(DEFAULT_ERROR_MSG, err)
 						tmpRpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 						tmpRpcConn.request.Done()
 					}
+
 				}(tmpRpcConn)
 				err := defaultJsonRpcInterceptor(tmpRpcConn)
 				if err != nil {
