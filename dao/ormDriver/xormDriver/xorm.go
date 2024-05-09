@@ -176,7 +176,6 @@ func checkDbHealthy() {
 			time.Sleep(time.Second * 10)
 		}
 	}()
-
 }
 
 func Sync2(beans ...interface{}) {

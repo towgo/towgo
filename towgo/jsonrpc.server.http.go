@@ -147,14 +147,14 @@ func (c *HttpRpcConnection) ReadParams(destParams ...interface{}) error {
 		var err error
 		c.paramsBytes, err = json.Marshal(c.rpcRequest.Params)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
 
 	for _, v := range destParams {
 		err := json.Unmarshal(c.paramsBytes, v)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
 	return nil
@@ -167,13 +167,13 @@ func (c *HttpRpcConnection) ReadResult(destParams ...interface{}) error {
 		var err error
 		c.resultBytes, err = json.Marshal(c.rpcResponse.Result)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
 	for _, v := range destParams {
 		err := json.Unmarshal(c.resultBytes, v)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
 
@@ -265,9 +265,29 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 	rpcConn := NewHttpRpcConnection(w, r)
 
 	defer func(rpcConn JsonRpcConnection) {
-		err := recover()
-		if err != nil {
-			log.Print(DEFAULT_ERROR_MSG, err)
+		r := recover()
+		if r != nil {
+			// 处理其他panic异常
+			var errors []error
+			// 捕获第一条panic异常
+			if err, ok := r.(error); ok {
+				errors = append(errors, err)
+			}
+			for {
+				if r = recover(); r == nil {
+					break
+				}
+
+				if err, ok := r.(error); ok {
+					errors = append(errors, err)
+				}
+			}
+
+			// 打印错误信息
+			fmt.Println("发生以下错误：")
+			for _, err := range errors {
+				fmt.Println(err)
+			}
 			rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 		}
 	}(rpcConn)
