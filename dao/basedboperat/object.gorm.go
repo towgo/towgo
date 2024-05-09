@@ -438,13 +438,6 @@ func (orm *Gorm) ListScan(l *List, model interface{}, destModels interface{}) {
 		}
 	}
 
-	if len(l.Join) > 0 {
-		for k, v := range l.Join {
-			dbcount = dbcount.Joins(k, v...)
-			dbSessionLink = dbSessionLink.Joins(k, v...)
-		}
-	}
-
 	if len(l.Not) > 0 {
 		for k, v := range l.Not {
 			if v == nil {

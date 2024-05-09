@@ -204,9 +204,31 @@ func clientConnHandler(wsc *WebScoketClient) {
 			//委托任务
 			go func(tmpRpcConn *WebSocketRpcConnection) {
 				defer func(tmpRpcConn *WebSocketRpcConnection) {
-					err := recover()
-					if err != nil {
-						log.Print(DEFAULT_ERROR_MSG, err)
+					r := recover()
+					if r != nil {
+
+						// 处理其他panic异常
+						var errors []error
+						// 捕获第一条panic异常
+						if err, ok := r.(error); ok {
+							errors = append(errors, err)
+						}
+						for {
+							if r = recover(); r == nil {
+								break
+							}
+
+							if err, ok := r.(error); ok {
+								errors = append(errors, err)
+							}
+						}
+
+						// 打印错误信息
+						fmt.Println("发生以下错误：")
+						for _, err := range errors {
+							fmt.Println(err)
+						}
+
 						tmpRpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 						tmpRpcConn.request.Done()
 					}
