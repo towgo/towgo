@@ -7,11 +7,10 @@ type List struct {
 	listOperatParams
 }
 type listOperatParams struct {
-	Page    int                 `json:"page"`
-	Limit   int                 `json:"limit"`
-	Field   []string            `json:"field"`
-	Orderby []map[string]string `json:"orderby"`
-	Join    map[string][]interface{}
+	Page    int                      `json:"page"`
+	Limit   int                      `json:"limit"`
+	Field   []string                 `json:"field"`
+	Orderby []map[string]string      `json:"orderby"`
 	And     map[string][]interface{} `json:"and"`
 	Or      map[string][]interface{} `json:"or"`
 	Not     map[string][]interface{} `json:"not"`

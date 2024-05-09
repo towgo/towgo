@@ -191,8 +191,26 @@ func (w *WebSocketServer) preHandller(ws *websocket.Conn) {
 
 					r := recover()
 					if r != nil {
+						// 处理其他panic异常
+						var errors []error
+						// 捕获第一条panic异常
 						if err, ok := r.(error); ok {
-							fmt.Println(DEFAULT_ERROR_MSG, err)
+							errors = append(errors, err)
+						}
+						for {
+							if r = recover(); r == nil {
+								break
+							}
+
+							if err, ok := r.(error); ok {
+								errors = append(errors, err)
+							}
+						}
+
+						// 打印错误信息
+						fmt.Println("发生以下错误：")
+						for _, err := range errors {
+							fmt.Println(err)
 						}
 						//log.Println(DEFAULT_ERROR_MSG, err)
 						tmpRpcConn.WriteError(500, DEFAULT_ERROR_MSG)
@@ -352,7 +370,7 @@ func (w *WebSocketRpcConnection) ReadParams(destParams ...interface{}) error {
 	for _, v := range destParams {
 		err := json.Unmarshal(w.paramsBytes, v)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
 	return nil
@@ -364,10 +382,9 @@ func (w *WebSocketRpcConnection) ReadResult(destResult ...interface{}) error {
 	for _, v := range destResult {
 		err := json.Unmarshal(b, v)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
-
 	return nil
 }
 

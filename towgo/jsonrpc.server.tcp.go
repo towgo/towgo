@@ -330,7 +330,7 @@ func (c *TcpRpcConnection) ReadParams(destParams ...interface{}) error {
 	for _, v := range destParams {
 		err := json.Unmarshal(c.paramsBytes, v)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
 	return nil
@@ -349,10 +349,17 @@ func (c *TcpRpcConnection) ReadResult(destParams ...interface{}) error {
 	for _, v := range destParams {
 		err := json.Unmarshal(c.resultBytes, v)
 		if err != nil {
-			return err
+			log.Print(err.Error())
 		}
 	}
 
+	return nil
+}
+
+func (c *TcpRpcConnection) WriteSource(b []byte) error {
+	if !c.isConnected {
+		return errors.New("未连接")
+	}
 	return nil
 }
 
