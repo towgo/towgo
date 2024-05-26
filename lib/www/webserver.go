@@ -36,7 +36,6 @@ func (webserver *WebServer) WebServerHandller(w http.ResponseWriter, r *http.Req
 			if err == nil {
 				webserver.WriteFile(w, filepath, f)
 				return
-
 			}
 		}
 

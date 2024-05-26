@@ -209,10 +209,12 @@ func clientConnHandler(wsc *WebScoketClient) {
 
 						// 处理其他panic异常
 						var errors []error
+
 						// 捕获第一条panic异常
 						if err, ok := r.(error); ok {
 							errors = append(errors, err)
 						}
+
 						for {
 							if r = recover(); r == nil {
 								break
@@ -233,6 +235,7 @@ func clientConnHandler(wsc *WebScoketClient) {
 						tmpRpcConn.request.Done()
 					}
 				}(tmpRpcConn)
+
 				err := defaultJsonRpcInterceptor(tmpRpcConn)
 				if err != nil {
 					log.Print(fmt.Errorf("请求被拦截:%w", err))
