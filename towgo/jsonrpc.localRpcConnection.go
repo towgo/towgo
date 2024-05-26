@@ -143,6 +143,9 @@ func (n *LocalRpcConnection) Close() {
 }
 
 func NewLocalRpcConnection(rpcRequest *Jsonrpcrequest, rpcResponse *Jsonrpcresponse) JsonRpcConnection {
+	if rpcResponse == nil {
+		rpcResponse = NewJsonrpcresponse()
+	}
 	return &LocalRpcConnection{
 		rpcRequest:  rpcRequest,
 		rpcResponse: rpcResponse,

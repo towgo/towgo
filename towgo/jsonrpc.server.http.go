@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -264,35 +265,13 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 
 	rpcConn := NewHttpRpcConnection(w, r)
 
-	/*
-		defer func(rpcConn JsonRpcConnection) {
-			r := recover()
-			if r != nil {
-				// 处理其他panic异常
-				var errors []error
-				// 捕获第一条panic异常
-				if err, ok := r.(error); ok {
-					errors = append(errors, err)
-				}
-				for {
-					if r = recover(); r == nil {
-						break
-					}
-
-					if err, ok := r.(error); ok {
-						errors = append(errors, err)
-					}
-				}
-
-				// 打印错误信息
-				fmt.Println("发生以下错误：")
-				for _, err := range errors {
-					fmt.Println(err)
-				}
-				rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
-			}
-		}(rpcConn)
-	*/
+	defer func(rpcConn JsonRpcConnection) {
+		r := recover()
+		if r != nil {
+			log.Printf("err=%v , stack=%s\n", r, debug.Stack())
+			rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+		}
+	}(rpcConn)
 
 	if rpcConn == nil {
 		return
