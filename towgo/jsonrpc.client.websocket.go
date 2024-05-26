@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -184,7 +185,7 @@ func clientConnHandler(wsc *WebScoketClient) {
 				go func(rpcCallbackInterface any, tmpRpcConn *WebSocketRpcConnection) {
 					defer func() {
 						if err := recover(); err != nil {
-							log.Printf("error: %s\n", err)
+							log.Printf("err=%v , stack=%s\n", err, debug.Stack())
 						}
 					}()
 					rpcCallback := rpcCallbackInterface.(*RpcCallback)
@@ -206,31 +207,7 @@ func clientConnHandler(wsc *WebScoketClient) {
 				defer func(tmpRpcConn *WebSocketRpcConnection) {
 					r := recover()
 					if r != nil {
-
-						// 处理其他panic异常
-						var errors []error
-
-						// 捕获第一条panic异常
-						if err, ok := r.(error); ok {
-							errors = append(errors, err)
-						}
-
-						for {
-							if r = recover(); r == nil {
-								break
-							}
-
-							if err, ok := r.(error); ok {
-								errors = append(errors, err)
-							}
-						}
-
-						// 打印错误信息
-						fmt.Println("发生以下错误：")
-						for _, err := range errors {
-							fmt.Println(err)
-						}
-
+						log.Printf("err=%v , stack=%s\n", r, debug.Stack())
 						tmpRpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 						tmpRpcConn.request.Done()
 					}
