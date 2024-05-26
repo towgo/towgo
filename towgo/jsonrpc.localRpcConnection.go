@@ -157,4 +157,5 @@ func (c *LocalRpcConnection) EnableHealthCheck() {
 }
 
 func (c *LocalRpcConnection) DisableHealthCheck() {
+
 }
