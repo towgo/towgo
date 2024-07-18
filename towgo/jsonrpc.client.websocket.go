@@ -32,7 +32,12 @@ type WebScoketClient struct {
 	OnConnect              func(*WebScoketClient)
 	OnClose                func(*WebScoketClient)
 	healCheckCancel        context.CancelFunc
+	connected              bool
 	pingTimeOut            int64
+}
+
+func (wsc *WebScoketClient) IsConnected() bool {
+	return wsc.connected
 }
 
 // 关闭心跳检测
@@ -101,6 +106,7 @@ func (wsc *WebScoketClient) Close() {
 }
 
 func (wsc *WebScoketClient) onClose() {
+	wsc.connected = false
 	wsc.DisableHealthCheck()
 	if wsc.OnClose != nil {
 		go wsc.OnClose(wsc)
@@ -156,8 +162,8 @@ func (wsc *WebScoketClient) reConnect() {
 func clientConnHandler(wsc *WebScoketClient) {
 	if wsc.OnConnect != nil {
 		go wsc.OnConnect(wsc)
-
 	}
+	wsc.connected = true
 	wsc.EnableHealthCheck()
 	rpcConn := NewWebSocketRpcConnection(wsc.conn)
 	var err error
@@ -233,7 +239,12 @@ func (wsc *WebScoketClient) Call(rpcRequest *Jsonrpcrequest, callback func(JsonR
 		rpcRequest.Id = system.GetGUID().Hex()
 	}
 
-	if wsc.conn == nil {
+	if wsc.conn == nil || !wsc.IsConnected() {
+		rpcRequest.Done()
+		resp := NewJsonrpcresponse()
+		resp.Error.Set(500, "websocket没有连接")
+		nilConn := NewNilRpcConnection(rpcRequest, resp)
+		callback(nilConn)
 		return
 	}
 
