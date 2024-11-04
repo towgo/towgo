@@ -538,11 +538,13 @@ func (orm *Xorm) ListScan(l *List, model interface{}, destModels interface{}) {
 	if err != nil {
 		log.Print(err.Error())
 	}
+	l.Error = err
 
 	count, err = dbSessionLinkCount.Count(model)
 	if err != nil {
 		log.Print(err.Error())
 	}
+
 	l.Count = count
 
 	//exp := getModelExpire(destModels)

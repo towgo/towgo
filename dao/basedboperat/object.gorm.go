@@ -490,7 +490,7 @@ func (orm *Gorm) ListScan(l *List, model interface{}, destModels interface{}) {
 
 	//执行sql语句
 	dbSessionLink = dbSessionLink.Find(destModels)
-
+	l.Error = dbSessionLink.Error
 	//查询总数
 	dbcount.Count(&count)
 	l.Count = count
