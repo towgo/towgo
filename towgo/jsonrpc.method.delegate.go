@@ -83,7 +83,7 @@ func AddMethodHead(methodHead string) {
 
 // 获取method列表
 func GetMethods() (method []string) {
-	for k, _ := range funcs {
+	for k := range funcs {
 		method = append(method, k)
 	}
 	return
@@ -116,7 +116,7 @@ func http_jsonrpc_wrapper(w http.ResponseWriter, r *http.Request) {
 
 // 将jsonrpc method路由接口兼容为HTTP路由接口 兼容restful风格
 func MethodToHttpPathInterface(serveMux *http.ServeMux) {
-	for k, _ := range funcs {
+	for k := range funcs {
 		method := "/" + strings.TrimLeft(k, "/")
 		serveMux.HandleFunc(method, http_jsonrpc_wrapper)
 	}
@@ -134,7 +134,7 @@ func MethodUnlock(method string) {
 
 // 锁定所有method （可用于许可证到期锁定相关服务,排除关键性业务不锁定）
 func MethodLockAll(excludeMethods ...string) {
-	for k, _ := range funcs {
+	for k := range funcs {
 		lockedMethods.Store(k, "")
 	}
 	for _, v := range excludeMethods {
