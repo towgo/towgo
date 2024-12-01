@@ -136,14 +136,6 @@ func PostFormDataWithSingleFile(url string, fullfilepath string, filename string
 		return "", err
 	}
 
-	/*
-		file_type, _ := bodyWrite.CreateFormField("file_type")
-		file_type.Write([]byte("doc"))
-
-		file_name, _ := bodyWrite.CreateFormField("file_name")
-		file_name.Write([]byte(filename))
-	*/
-
 	bodyWrite.Close() //要关闭，会将w.w.boundary刷写到w.writer中
 	// 创建请求
 	contentType := bodyWrite.FormDataContentType()
