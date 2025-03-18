@@ -1,0 +1,7 @@
+{
+    "Priority":0,
+    "ModuleName":"Account Center",
+    "ServerUrls":[
+        "ws://172.0.0.19:5000/websocket/jsonrpc"
+    ]
+}

@@ -1,0 +1,10 @@
+[
+    {
+    "DbType":"mysql",
+    "IsMaster":true,
+    "Dsn":"root:Password1!@tcp(mysql-a.fanhaninfo.test:3306)/dev_oss?charset=utf8mb4",
+    "sqlMaxIdleConns":1,
+    "sqlMaxOpenConns":1,
+    "sqlLogLevel":2
+    }
+]

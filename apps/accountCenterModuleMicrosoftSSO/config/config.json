@@ -1,0 +1,8 @@
+{
+    "serverport":"19002",
+    "ClientID":"idp-57f2c70a-c203-4d1f-a002-ab86bd95792b-Hub-RPACOEPlatform-Prod",
+    "AuthUrl":"https://idp.cloud.vwgroup.com/auth/realms/kums-mfa/protocol/openid-connect/auth",
+    "TokenUrl":"https://idp.cloud.vwgroup.com/auth/realms/kums-mfa/protocol/openid-connect/token",
+    "ClientSecret":"cidps_NfwMqFJHpOGnQn8EPdeIV17gFSJKHg3TI2BEwfXC4kxiKrlaRaeg30llk9",
+    "RedirectURI":"http://172.21.85.72:19002/ssocallback"
+}

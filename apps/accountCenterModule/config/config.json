@@ -1,0 +1,24 @@
+{
+  "server": {
+    "port": "10003"
+  },
+  "database": [
+    {
+      "DbType": "mysql",
+      "IsMaster": true,
+      "Dsn": "root:Password1!@tcp(172.0.0.20:3306)/gh_digital_employee?charset=utf8mb4",
+      "sqlMaxIdleConns": 1,
+      "sqlMaxOpenConns": 1,
+      "sqlLogLevel": 2
+    }
+  ],
+  "togocdn": {
+    "client": {
+      "Priority":0,
+      "ModuleName":"Account Center",
+      "ServerUrls":[
+        "ws://172.0.0.19:4000/websocket/jsonrpc"
+      ]
+    }
+  }
+}
