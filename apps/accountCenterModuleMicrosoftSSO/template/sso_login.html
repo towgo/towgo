@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <title></title>
+</head>
+
+<body id="body">
+    {{if .Msg}}
+    <span>{{.Msg}}</span>
+    <a id="my_link" href="#" target="_self">点击跳转登录页面</a>
+    {{end}}
+</body>
+
+</html>
+
+
+
+<script>
+    {{if .Msg}}
+    var link = document.getElementById("my_link")
+    link.href = window.location.protocol+'//'+window.location.host
+    {{end}}
+    const account = {
+        async login(username, password) {
+            let url = "/user/login"
+            let method = "POST"
+            if (username == "") {
+                console.log("用户名不能为空")
+                return
+            }
+            if (password == "") {
+                console.log("密码不能为空")
+                return
+            }
+
+            await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username, password: password })
+            }).then(resp => {
+                if (resp.status != 200) {
+                    alert("error:" + resp.status)
+                    return
+                }
+                resp.json().then(body => {
+                    localStorage.setItem("token", body.result.newSecret)
+                    localStorage.setItem("session", body.result.token)
+
+                    account.setCookie('ctoken',body.result.token,7)
+                    account.getUserinfo()
+
+                })
+
+
+            }).catch(resp => {
+                console.log(resp)
+                // alert(resp)
+            })
+        }
+
+        , async getUserinfo() {
+
+            let url = "/master/sysUser/getUserInfo"
+            let method = "GET"
+            await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': localStorage.getItem("token"),
+                    'token': localStorage.getItem("token"),
+                }
+            }).then(resp => {
+                if (resp.status != 200) {
+                    console.log("error:" + resp.status)
+                    return
+                }
+                resp.json().then(body => {
+
+                    localStorage.setItem("roles", "0")
+
+                    localStorage.setItem("departList", JSON.stringify(body.result.departList))
+                    localStorage.setItem("ocDeptList", JSON.stringify(body.result.ocDeptList))
+                    localStorage.setItem("userRoles", JSON.stringify(body.result.roleList))
+                    localStorage.setItem("deptId", JSON.stringify(body.result.deptId))
+                    localStorage.setItem("userName", body.result.account)
+                    localStorage.setItem("selectedRole", JSON.stringify(body.result.roleId))
+
+                    account.dept()
+
+
+
+                })
+
+
+            }).catch(resp => {
+                console.log(resp)
+            })
+        }
+
+        , async dept() {
+            let url = "/master/optionValues/dept"
+            let method = "GET"
+            await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': localStorage.getItem("token"),
+                    'token': localStorage.getItem("token"),
+                }
+            }).then(resp => {
+                if (resp.status != 200) {
+                    console.log("error:" + resp.status)
+                    return
+                }
+                resp.json().then(body => {
+                    localStorage.setItem("dep", JSON.stringify(body.result))
+                    account.depart()
+                })
+
+
+            }).catch(resp => {
+                console.log(resp)
+            })
+        }
+
+        , async depart() {
+            let url = "/master/optionValues/depart"
+            let method = "GET"
+            await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': localStorage.getItem("token"),
+                    'token': localStorage.getItem("token"),
+                }
+            }).then(resp => {
+                if (resp.status != 200) {
+                    alert("error:" + resp.status)
+                    return
+                }
+                resp.json().then(body => {
+                    localStorage.setItem("platformDep", JSON.stringify(body.result))
+                    account.getMenuByUserId()
+
+                })
+
+
+            }).catch(resp => {
+                console.log(resp)
+            })
+        }
+
+        , async getMenuByUserId() {
+            let url = "/master/sysUser/getMenuByUserId"
+            let method = "GET"
+            await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': localStorage.getItem("token"),
+                    'token': localStorage.getItem("token"),
+                }
+            }).then(resp => {
+                if (resp.status != 200) {
+                    alert("error:" + resp.status)
+                    return
+                }
+                resp.json().then(body => {
+                    location.href = "/"
+                })
+
+
+            }).catch(resp => {
+                console.log(resp)
+            })
+        }
+
+        , setCookie(name, value, daysToLive) {
+            let cookie = name + "=" + encodeURIComponent(value);
+ 
+            if (typeof daysToLive === "number") {
+                cookie += "; max-age=" + (daysToLive * 24 * 60 * 60); // 将天数转换为秒数
+            }
+ 
+            document.cookie = cookie;
+        }
+    }
+
+    setTimeout(() => account.login("{{.Username}}", "{{.Password}}"), 1000)
+    // account.login("{{.Username}}","{{.Password}}")
+</script>

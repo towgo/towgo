@@ -1,0 +1,10 @@
+{
+    "domain": {
+        "ap": "ldap://ap.elcompanies.net:636",
+        "am": "ldap://am.elcompanies.net:636",
+        "rs": "ldap://rs.elcompanies.net:636",
+        "eu": "ldap://eu.elcompanies.net:636",
+        "fanhan": "ldap://172.0.0.54:389"
+    },
+    "is_tls": false
+}
