@@ -37,9 +37,9 @@ func (orm *Xorm) Value(key any) any {
 }
 
 func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue("parent_dboperat_function", "First")
+	orm.WithValue(DbOperateBeforeKey, FirstValue)
 	orm.currentSelectFields = selectFields
-	defer reflectMethodCall(destModel, "AfterQuery", orm)
+	defer reflectMethodCall(destModel, AfterQuery, orm)
 
 	cacheKey := GenerateCacheKey(destModel, PrimaryKey, selectFields, condition, conditionArgs)
 	if queryCache(destModel, cacheKey) {
@@ -71,9 +71,9 @@ func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []
 
 // 获取最后条记录
 func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue("parent_dboperat_function", "Last")
+	orm.WithValue(DbOperateBeforeKey, LastValue)
 	orm.currentSelectFields = selectFields
-	defer reflectMethodCall(destModel, "AfterQuery", orm)
+	defer reflectMethodCall(destModel, AfterQuery, orm)
 
 	cacheKey := GenerateCacheKey(destModel, PrimaryKey, selectFields, condition, conditionArgs)
 	if queryCache(destModel, cacheKey) {
@@ -107,9 +107,9 @@ func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []s
 
 // 获取记录
 func (orm *Xorm) Get(destModel interface{}, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue("parent_dboperat_function", "Get")
+	orm.WithValue(DbOperateBeforeKey, GetValue)
 	orm.currentSelectFields = selectFields
-	defer reflectMethodCall(destModel, "AfterQuery", orm)
+	defer reflectMethodCall(destModel, AfterQuery, orm)
 
 	cacheKey := GenerateCacheKey(destModel, selectFields, condition, conditionArgs)
 	if queryCache(destModel, cacheKey) {
@@ -141,7 +141,7 @@ func (orm *Xorm) Get(destModel interface{}, selectFields []string, condition int
 
 // 更新记录
 func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue("parent_dboperat_function", "Update")
+	orm.WithValue(DbOperateBeforeKey, UpdateValue)
 	var selectFieldsTmp []string
 
 	if fields != nil {
@@ -167,25 +167,26 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 	}
 	orm.currentSelectFields = selectFieldsTmp
 
-	err := reflectMethodCall(model, "InputCheck", orm)
+	err := reflectMethodCall(model, InputCheck, orm)
 	if err != nil {
 		return err
 	}
 
-	err = reflectMethodCall(model, "UpdateCheck", orm)
+	err = reflectMethodCall(model, UpdateCheck, orm)
 	if err != nil {
 		return err
 	}
 
-	err = reflectMethodCall(model, "BeforeSave", orm)
+	err = reflectMethodCall(model, BeforeSave, orm)
 	if err != nil {
 		return err
 	}
-	err = reflectMethodCall(model, "BeforeUpdate", orm)
+	err = reflectMethodCall(model, BeforeUpdate, orm)
 	if err != nil {
 		return err
 	}
-	defer reflectMethodCall(model, "AfterSave", orm)
+	defer reflectMethodCall(model, AfterSave, orm)
+	defer reflectMethodCall(model, AfterUpdate, orm)
 	var session *xorm.Session
 	if orm.session != nil {
 		session = orm.session
@@ -228,13 +229,13 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 
 // 删除记录
 func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition interface{}, conditionArgs ...interface{}) (int64, error) {
-	orm.WithValue("parent_dboperat_function", "Delete")
+	orm.WithValue(DbOperateBeforeKey, DeleteValue)
 
-	err := reflectMethodCall(model, "BeforeDelete", orm)
+	err := reflectMethodCall(model, BeforeDelete, orm)
 	if err != nil {
 		return 0, err
 	}
-	defer reflectMethodCall(model, "AfterDelete", orm)
+	defer reflectMethodCall(model, AfterDelete, orm)
 	var session *xorm.Session
 	if orm.session != nil {
 		session = orm.session
@@ -254,24 +255,24 @@ func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition i
 
 // 创建记录
 func (orm *Xorm) Create(model interface{}) (int64, error) {
-	orm.WithValue("parent_dboperat_function", "Create")
+	orm.WithValue(DbOperateBeforeKey, CreateValue)
 
-	err := reflectMethodCall(model, "InputCheck", orm)
+	err := reflectMethodCall(model, InputCheck, orm)
 	if err != nil {
 		return 0, err
 	}
-	err = reflectMethodCall(model, "CreateCheck", orm)
+	err = reflectMethodCall(model, CreateCheck, orm)
 	if err != nil {
 		return 0, err
 	}
 
-	err = reflectMethodCall(model, "BeforeCreate", orm)
+	err = reflectMethodCall(model, BeforeCreate, orm)
 	if err != nil {
 		return 0, err
 	}
 
 	defer func() {
-		reflectMethodCall(model, "AfterCreate", orm)
+		reflectMethodCall(model, AfterCreate, orm)
 	}()
 	var session *xorm.Session
 	if orm.session != nil {
@@ -396,12 +397,12 @@ func (orm *Xorm) QueryScan(destModel interface{}, extra interface{}, condition i
 }
 
 func (orm *Xorm) ListScan(l *List, model interface{}, destModels interface{}) {
-	orm.WithValue("parent_dboperat_function", "ListScan")
+	orm.WithValue(DbOperateBeforeKey, ListScanValue)
 	cacheKey := GenerateCacheKey(destModels, l, model)
 	if queryCache(destModels, cacheKey) {
 		queryCache(l, cacheKey+"list")
 
-		reflectSliceModelCall(destModels, "AfterQuery", orm)
+		reflectSliceModelCall(destModels, AfterQuery, orm)
 		return
 	}
 
@@ -550,7 +551,7 @@ func (orm *Xorm) ListScan(l *List, model interface{}, destModels interface{}) {
 	//exp := getModelExpire(destModels)
 	//setCache(destModels, cacheKey, exp)
 	//setCache(l, cacheKey+"list", exp)
-	reflectSliceModelCall(destModels, "AfterQuery", orm)
+	reflectSliceModelCall(destModels, AfterQuery, orm)
 
 }
 

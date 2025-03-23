@@ -20,6 +20,35 @@ import (
 var globalCacheExpire int64 = 0
 var queryCacheMap sync.Map
 
+const (
+	DbOperateBeforeKey = "parent_dboperat_function"
+	ListScanValue      = "ListScan"
+	FirstValue         = "First"
+	LastValue          = "Last"
+	CreateValue        = "Create"
+	DeleteValue        = "Delete"
+	UpdateValue        = "Update"
+	GetValue           = "Get"
+)
+const (
+	AfterQuery = "AfterQuery"
+	InputCheck = "InputCheck"
+
+	CreateCheck  = "CreateCheck"
+	BeforeCreate = "BeforeCreate"
+	AfterCreate  = "AfterCreate"
+
+	UpdateCheck  = "UpdateCheck"
+	BeforeUpdate = "BeforeUpdate"
+	AfterUpdate  = "AfterUpdate"
+
+	BeforeSave = "BeforeSave"
+	AfterSave  = "AfterSave"
+
+	BeforeDelete = "BeforeDelete"
+	AfterDelete  = "AfterDelete"
+)
+
 type packageStruc struct {
 	mode   string
 	engine DbOperat
