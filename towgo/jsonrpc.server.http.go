@@ -13,7 +13,6 @@ import (
 	"log"
 	"net/http"
 	"reflect"
-	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -265,13 +264,7 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 
 	rpcConn := NewHttpRpcConnection(w, r)
 
-	defer func(rpcConn JsonRpcConnection) {
-		r := recover()
-		if r != nil {
-			log.Printf("err=%v , stack=%s\n", r, debug.Stack())
-			rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
-		}
-	}(rpcConn)
+	DefaultExec(rpcConn)
 
 	if rpcConn == nil {
 		return
