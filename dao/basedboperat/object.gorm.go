@@ -32,7 +32,9 @@ func (orm *Gorm) Value(key any) any {
 	}
 	return orm.ctx.Value(key)
 }
-
+func (orm *Gorm) HasValue(key, value any) bool {
+	return orm.Value(key) == value
+}
 func (orm *Gorm) First(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
 	orm.WithValue(DbOperateBeforeKey, FirstValue)
 	orm.currentSelectFields = selectFields
