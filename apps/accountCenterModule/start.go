@@ -7,6 +7,7 @@ import (
 	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"github.com/towgo/towgo/module/accountcenter"
 	"github.com/towgo/towgo/os/tcfg"
+	"github.com/towgo/towgo/towgo"
 	"log"
 	"net/http"
 	"os"
@@ -129,7 +130,7 @@ func httpServer() {
 	frontServer := www.WebServer{}
 	frontServer.Wwwroot = "wwwroot"
 	frontServer.Index = []string{"index.html"}
-
+	towgo.HttpHandller()
 	http.HandleFunc("/websocket/jsonrpc", jsonrpc.DefaultWebSocketServer.WebsocketServiceHandller.ServeHTTP)
 	http.HandleFunc("/", frontServer.WebServerHandller)
 	jsonrpc.MethodToHttpInterface(http.DefaultServeMux)

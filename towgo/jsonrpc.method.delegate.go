@@ -6,6 +6,8 @@ version 2.2
 package towgo
 
 import (
+	"github.com/towgo/towgo/errors/tcode"
+	"github.com/towgo/towgo/errors/terror"
 	"log"
 	"net/http"
 	"strings"
@@ -22,6 +24,18 @@ var lockedMethods sync.Map
 
 var BeforExec func(rpcConn JsonRpcConnection)
 var AfterExec func(rpcConn JsonRpcConnection)
+var DefaultExec func(rpcConn JsonRpcConnection) = func(rpcConn JsonRpcConnection) {
+	if err := recover(); err != nil {
+		if exception := recover(); exception != nil {
+			if v, ok := exception.(error); ok && terror.HasStack(v) {
+				log.Printf("err %+v \n", v)
+			} else {
+				log.Printf("recover exception %+v\n", terror.NewCodef(tcode.CodeInternalPanic, "%+v", exception))
+			}
+		}
+		rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
+	}
+}
 var OnMethodNotFound func(rpcConn JsonRpcConnection)
 
 var Execmap map[string]int
