@@ -264,7 +264,7 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 
 	rpcConn := NewHttpRpcConnection(w, r)
 
-	DefaultExec(rpcConn)
+	defer DefaultExec(rpcConn)
 
 	if rpcConn == nil {
 		return
