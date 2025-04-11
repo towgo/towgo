@@ -23,5 +23,8 @@ func init() {
 		}
 	}
 	logger.SetTimeFormat("2006-01-02 15:04:05")
-	logger.Path(DefaultLogPath)
+	err = logger.SetPath(DefaultLogPath)
+	if err != nil {
+		panic(terror.Wrap(err, "logger config init error"))
+	}
 }
