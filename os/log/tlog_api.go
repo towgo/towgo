@@ -1,8 +1,7 @@
 package log
 
 func init() {
-	logger.SetTimeFormat("2006-01-02 15:04:05")
-	logger.Path(DefaultLogPath)
+
 }
 func SetConfig(config map[string]interface{}) {
 	err := logger.SetConfigWithMap(config)
