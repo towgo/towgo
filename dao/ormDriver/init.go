@@ -31,7 +31,10 @@ func init() {
 			panic(terror.Wrap(err, "database config init error"))
 		}
 		xormDriver.New(xormNodes)
-		basedboperat.SetOrmEngine("xorm")
+		err = basedboperat.SetOrmEngine("xorm")
+		if err != nil {
+			panic(terror.Wrap(err, "database config init error"))
+		}
 		break
 	case "gorm":
 		var gormNodes []gormDriver.DsnConfig
@@ -40,7 +43,10 @@ func init() {
 			panic(terror.Wrap(err, "database config init error"))
 		}
 		gormDriver.New(gormNodes)
-		basedboperat.SetOrmEngine("gorm")
+		err = basedboperat.SetOrmEngine("gorm")
+		if err != nil {
+			panic(terror.Wrap(err, "database config init error"))
+		}
 		break
 	}
 }
