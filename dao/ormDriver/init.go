@@ -2,6 +2,7 @@ package ormDriver
 
 import (
 	"encoding/json"
+	"github.com/towgo/towgo/dao/basedboperat"
 	"github.com/towgo/towgo/dao/ormDriver/gormDriver"
 	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"github.com/towgo/towgo/errors/terror"
@@ -30,6 +31,7 @@ func init() {
 			panic(terror.Wrap(err, "database config init error"))
 		}
 		xormDriver.New(xormNodes)
+		basedboperat.SetOrmEngine("xorm")
 		break
 	case "gorm":
 		var gormNodes []gormDriver.DsnConfig
@@ -38,6 +40,7 @@ func init() {
 			panic(terror.Wrap(err, "database config init error"))
 		}
 		gormDriver.New(gormNodes)
+		basedboperat.SetOrmEngine("gorm")
 		break
 	}
 }
