@@ -84,6 +84,7 @@ func (lop *listOperatParams) AddNot(field string, v []interface{}) *listOperatPa
 		lop.Not = map[string][]interface{}{field: []interface{}{}}
 	}
 	lop.Not[field] = append(lop.Not[field], v...)
+	return lop
 }
 func (lop *listOperatParams) AddLike(field string, v []interface{}) *listOperatParams {
 	if lop.Like == nil || len(lop.Like) <= 0 {
