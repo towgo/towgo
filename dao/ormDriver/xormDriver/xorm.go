@@ -58,7 +58,7 @@ func syncBeans() {
 			}
 			err := db.Engine.Sync2(bean)
 			if err != nil {
-				log.Errorf("sync beans failed, %+v", err)
+				log.Errorf("sync beans {%+v} failed , %+v", bean, err)
 				continue
 			}
 		}
