@@ -1,15 +1,19 @@
 package tcfg
 
+import "github.com/towgo/towgo/os/log"
+
 var conf *Config
 
 func init() {
 	config, err := New()
 	if err != nil {
-		panic(err)
+		log.Error(err)
+		return
 	}
 	conf = config
 	if err = conf.LoadConfig(); err != nil {
-		panic(err)
+		log.Error(err)
+		return
 	}
 }
 func GetConfig() *Config {
