@@ -11,7 +11,7 @@ func init() {
 	config, err := New()
 	conf = config
 	if err != nil {
-		log.Printf("New() %+v", err)
+		log.Printf(" %+v", err)
 		return
 	}
 	if err = conf.LoadConfig(); err != nil {
