@@ -3,6 +3,7 @@ package dblog
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/towgo/towgo/towgo"
 	"io"
 	"log"
 	"net/http"
@@ -12,14 +13,13 @@ import (
 	"time"
 
 	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/jsonrpc"
 	"github.com/towgo/towgo/lib/system"
 	"github.com/xuri/excelize/v2"
 )
 
 func InitDbLogApi() {
-	jsonrpc.SetFunc("/system/log/list", logList)
-	jsonrpc.SetFunc("/system/log/create", logCreate)
+	towgo.SetFunc("/system/log/list", logList)
+	towgo.SetFunc("/system/log/create", logCreate)
 	http.HandleFunc("/api/system/download/log/file", downloadLogFile)
 	basedboperat.Sync(new(Log), new(OperateType))
 	// clearExp()
@@ -30,7 +30,7 @@ func InitDbLogApi() {
 	)
 }
 
-func logList(rpcConn jsonrpc.JsonRpcConnection) {
+func logList(rpcConn towgo.JsonRpcConnection) {
 	var log Log
 	var logList []Log
 	var list basedboperat.List
@@ -47,7 +47,7 @@ func logList(rpcConn jsonrpc.JsonRpcConnection) {
 	rpcConn.WriteResult(result)
 }
 
-func logCreate(rpcConn jsonrpc.JsonRpcConnection) {
+func logCreate(rpcConn towgo.JsonRpcConnection) {
 	var log Log
 	rpcConn.ReadParams(&log)
 	log.ID = 0
