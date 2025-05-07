@@ -1,18 +1,21 @@
 package tcfg
 
-import "github.com/towgo/towgo/os/log"
+import (
+	"github.com/towgo/towgo/errors/terror"
+	"log"
+)
 
 var conf *Config
 
 func init() {
 	config, err := New()
+	conf = config
 	if err != nil {
-		log.Error(err)
+		log.Printf("New() %+v", err)
 		return
 	}
-	conf = config
 	if err = conf.LoadConfig(); err != nil {
-		log.Error(err)
+		log.Printf("%+v", err)
 		return
 	}
 }
@@ -27,7 +30,7 @@ type Config struct {
 func New() (*Config, error) {
 	adapterFile, err := NewAdapter()
 	if err != nil {
-		return nil, err
+		return &Config{}, err
 	}
 	return &Config{
 		adapter: adapterFile,
@@ -72,6 +75,10 @@ func (c *Config) Data() map[string]interface{} {
 // "x.y.z" for map item.
 // "x.0.y" for slice item.
 func (c *Config) Get(pattern string) (interface{}, error) {
+	log.Printf("C=%+v", c)
+	if c.adapter == nil {
+		return nil, terror.New("adapter is nil")
+	}
 	return c.adapter.Get(pattern)
 }
 func (c *Config) GetDataToStruct(pattern string, p interface{}) (err error) {
