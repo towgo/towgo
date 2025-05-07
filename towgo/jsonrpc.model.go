@@ -38,6 +38,7 @@ type Jsonrpcrequest struct {
 	ctxCancel    context.CancelFunc         `json:"-"`
 	Jsonrpc      string                     `json:"jsonrpc"`
 	Method       string                     `json:"method"`
+	DataType     string                     `json:"DataType"`
 	Params       interface{}                `json:"params"`
 	Id           string                     `json:"id"`
 	Ctx          map[ContextKey]interface{} `json:"ctx"`
@@ -51,6 +52,7 @@ type Jsonrpcrequest struct {
 // jsonrpc响应
 type Jsonrpcresponse struct {
 	Jsonrpc      string                     `json:"jsonrpc"`
+	DataType     string                     `json:"DataType"`
 	Result       interface{}                `json:"result"`
 	Id           string                     `json:"id"`
 	Ctx          map[ContextKey]interface{} `json:"ctx"`
@@ -149,7 +151,9 @@ func ToJsonrpcrequest(s string) (*Jsonrpcrequest, error) {
 			}
 
 			jsonrpcrequest.Isencryption = true
-
+			if jsonrpcrequest.DataType != "" {
+				jsonrpcrequest.Params = processSourceData(jsonrpcrequest.DataType, s)
+			}
 			return jsonrpcrequest, nil
 			//解密
 		} else {
@@ -157,6 +161,9 @@ func ToJsonrpcrequest(s string) (*Jsonrpcrequest, error) {
 		}
 
 	} else {
+		if jsonrpcrequest.DataType != "" {
+			jsonrpcrequest.Params = processSourceData(jsonrpcrequest.DataType, s)
+		}
 		return jsonrpcrequest, e
 	}
 }
@@ -182,7 +189,9 @@ func ToJsonrpcresponse(s string) (Jsonrpcresponse, error) {
 			if e != nil {
 				log.Print(e.Error())
 			}
-
+			if jsonrpcresponse.DataType != "" {
+				jsonrpcresponse.Result = processSourceData(jsonrpcresponse.DataType, s)
+			}
 			return jsonrpcresponse, e
 			//解密
 		} else {
@@ -190,7 +199,23 @@ func ToJsonrpcresponse(s string) (Jsonrpcresponse, error) {
 		}
 
 	} else {
+		if jsonrpcresponse.DataType != "" {
+			jsonrpcresponse.Result = processSourceData(jsonrpcresponse.DataType, s)
+		}
 		return jsonrpcresponse, e
+	}
+}
+
+func processSourceData(dataType, jsonStr string) interface{} {
+	switch dataType {
+	case "[]byte":
+		var data struct {
+			Params []byte `json:"params"`
+		}
+		json.Unmarshal([]byte(jsonStr), &data)
+		return data.Params
+	default:
+		return nil
 	}
 }
 
