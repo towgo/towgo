@@ -152,7 +152,7 @@ func ToJsonrpcrequest(s string) (*Jsonrpcrequest, error) {
 
 			jsonrpcrequest.Isencryption = true
 			if jsonrpcrequest.DataType != "" {
-				jsonrpcrequest.Params = processSourceData(jsonrpcrequest.DataType, s)
+				jsonrpcrequest.Params = ProcessSourceData(jsonrpcrequest.DataType, s, true)
 			}
 			return jsonrpcrequest, nil
 			//解密
@@ -162,7 +162,7 @@ func ToJsonrpcrequest(s string) (*Jsonrpcrequest, error) {
 
 	} else {
 		if jsonrpcrequest.DataType != "" {
-			jsonrpcrequest.Params = processSourceData(jsonrpcrequest.DataType, s)
+			jsonrpcrequest.Params = ProcessSourceData(jsonrpcrequest.DataType, s, true)
 		}
 		return jsonrpcrequest, e
 	}
@@ -190,7 +190,7 @@ func ToJsonrpcresponse(s string) (Jsonrpcresponse, error) {
 				log.Print(e.Error())
 			}
 			if jsonrpcresponse.DataType != "" {
-				jsonrpcresponse.Result = processSourceData(jsonrpcresponse.DataType, s)
+				jsonrpcresponse.Result = ProcessSourceData(jsonrpcresponse.DataType, s, false)
 			}
 			return jsonrpcresponse, e
 			//解密
@@ -200,22 +200,27 @@ func ToJsonrpcresponse(s string) (Jsonrpcresponse, error) {
 
 	} else {
 		if jsonrpcresponse.DataType != "" {
-			jsonrpcresponse.Result = processSourceData(jsonrpcresponse.DataType, s)
+			jsonrpcresponse.Result = ProcessSourceData(jsonrpcresponse.DataType, s, false)
 		}
 		return jsonrpcresponse, e
 	}
 }
 
-func processSourceData(dataType, jsonStr string) interface{} {
+func ProcessSourceData(dataType string, jsonStr string, isRrequest bool) interface{} {
+
+	var data struct {
+		Params []byte `json:"params"`
+		Result []byte `json:"result"`
+	}
 	switch dataType {
 	case "[]byte":
-		var data struct {
-			Params []byte `json:"params"`
-		}
 		json.Unmarshal([]byte(jsonStr), &data)
+
+	}
+	if isRrequest {
 		return data.Params
-	default:
-		return nil
+	} else {
+		return data.Result
 	}
 }
 
