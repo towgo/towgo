@@ -1,18 +1,38 @@
 package cmd
 
 import (
-	"errors"
+	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gcmd"
+	"github.com/gogf/gf/v2/os/glog"
+	"github.com/towgo/towgo/appdemos/demo/internal/controller/hello"
+	"github.com/towgo/towgo/appdemos/demo/internal/controller/order"
+	"github.com/towgo/towgo/appdemos/demo/internal/controller/user"
 	"github.com/towgo/towgo/appdemos/demo/internal/migrations"
+	"github.com/towgo/towgo/lib/processmanager"
 	"github.com/towgo/towgo/towgo"
-	"log"
 	"net/http"
 
 	"golang.org/x/net/context"
 )
 
+func init() {
+	towgo.BindObject("/hello", hello.New())
+	towgo.BindObject("/user", user.NewV1())
+	towgo.BindObject("/order", order.NewV1())
+	http.HandleFunc("/jsonrpc", towgo.HttpHandller)
+}
+func start() error {
+	port, err := g.Config().Get(context.Background(), "server.port")
+	if err != nil {
+		return err
+	}
+	glog.Infof(context.Background(), "启动成功 %+v", port)
+	return http.ListenAndServe("0.0.0.0:"+port.String(), nil)
+}
+
 var (
-	Main = gcmd.Command{
+	version = "v1.0.0"
+	Main    = gcmd.Command{
 		Name:  "main",
 		Usage: "main",
 		Brief: "start http server",
@@ -32,66 +52,53 @@ var (
 		Usage: "start",
 		Brief: "start http server",
 		Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
-			towgo.BindObject("/hello", NewHello())
-			log.Printf("%+v", towgo.GetMethods())
-			http.HandleFunc("/jsonrpc", towgo.HttpHandller)
-			err = http.ListenAndServe("0.0.0.0:8080", nil)
-
+			pm := processmanager.GetManager()
+			if pm.Start() {
+				err = start()
+			} else {
+				err = pm.Error
+			}
 			return err
 		},
 	}
+
+	Stop = gcmd.Command{
+		Name:  "stop",
+		Usage: "stop",
+		Brief: "stop http server",
+		Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
+			pm := processmanager.GetManager()
+			if pm.Stop() {
+				glog.Infof(ctx, "停止成功")
+			} else {
+				glog.Infof(ctx, "停止失败")
+			}
+
+			return nil
+		},
+	}
+	Restart = gcmd.Command{
+		Name:  "restart",
+		Usage: "restart",
+		Brief: "restart http server",
+		Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
+			pm := processmanager.GetManager()
+			if pm.ReStart() {
+				glog.Infof(ctx, "重启成功")
+				err = start()
+			} else {
+				glog.Infof(ctx, "停止失败")
+			}
+			return nil
+		},
+	}
+	Version = gcmd.Command{
+		Name:  "version",
+		Usage: "version",
+		Brief: "query version info",
+		Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
+			glog.Print(ctx, "version", g.Map{"app": version})
+			return nil
+		},
+	}
 )
-
-type Hello struct {
-}
-
-func NewHello() *Hello {
-	return &Hello{}
-}
-func (h *Hello) Hello1(conn *towgo.Jsonrpcrequest) (rep *HelloRep, err error) {
-
-	log.Println("Hello1 ---")
-	return rep, err
-}
-
-func (h *Hello) Hello2(req *HelloReq) (rep *HelloRep, err error) {
-	log.Printf("%+v", req)
-	log.Println("Hello2 ---")
-	rep = &HelloRep{
-		Age:     30,
-		Address: "Hello2",
-	}
-	return
-}
-func (h *Hello) Hello3(req *HelloReq) (rep *HelloRep, err error) {
-	log.Println("Hello3 ---")
-	log.Printf("%+v", req)
-	log.Println("Hello3 ---")
-	rep = &HelloRep{
-		Age:     40,
-		Address: "Hello3",
-	}
-	err = errors.New("Hello3")
-	return
-}
-func (h *Hello) HelloName(req *HelloReq) (rep *HelloRep, err error) {
-	log.Println("HelloName ---")
-	log.Printf("%+v", req)
-	log.Println("HelloName ---")
-	rep = &HelloRep{
-		Age:     40,
-		Address: "HelloName",
-	}
-	err = errors.New("HelloName")
-	return
-}
-
-type HelloReq struct {
-	Id    uint   `p:"id"`
-	Name  string `p:"name"`
-	Email string `p:"email"`
-}
-type HelloRep struct {
-	Age     uint   `json:"age"`
-	Address string `json:"address"`
-}

@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	err = root.AddObject(cmd.DbSync, cmd.Start)
+	err = root.AddObject(cmd.DbSync, cmd.Start, cmd.Stop, cmd.Restart, cmd.Version)
 	if err != nil {
 		glog.Error(ctx, err.Error())
 	}

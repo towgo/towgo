@@ -7,6 +7,7 @@ package towgo
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gogf/gf/v2/encoding/gjson"
@@ -16,6 +17,9 @@ import (
 	"github.com/gogf/gf/v2/os/gstructs"
 	"github.com/gogf/gf/v2/text/gstr"
 	"github.com/gogf/gf/v2/util/gconv"
+	"github.com/gogf/gf/v2/util/gmeta"
+	"github.com/gogf/gf/v2/util/gtag"
+	"github.com/gogf/gf/v2/util/gutil"
 	"github.com/gogf/gf/v2/util/gvalid"
 	"github.com/towgo/towgo/errors/tcode"
 	"github.com/towgo/towgo/errors/terror"
@@ -231,6 +235,15 @@ func BindObject(method string, object interface{}) {
 			panic(err)
 		}
 		uri := mergeBuildInNameToPattern(method, structName, methodName, true)
+		if funcInfo.Path != "" {
+			split := strings.Split(funcInfo.Path, "/")
+			replace := strings.Replace(method, "/", "", 1)
+			if replace != split[1] {
+				uri = method + funcInfo.Path
+			} else {
+				uri = funcInfo.Path
+			}
+		}
 		SetFunc(uri, funcInfo.Func)
 	}
 
@@ -268,7 +281,7 @@ func mergeBuildInNameToPattern(pattern string, structName, methodName string, al
 }
 
 // HandlerFunc is request handler function.
-type HandlerFunc = func(conn JsonRpcConnection)
+type HandlerFunc = func(JsonRpcConnection)
 
 // handlerFuncInfo contains the HandlerFunc address and its reflection type.
 type handlerFuncInfo struct {
@@ -277,6 +290,7 @@ type handlerFuncInfo struct {
 	Value           reflect.Value    // Reflect value information for current handler, which is used for extensions of the handler feature.
 	IsStrictRoute   bool             // Whether strict route matching is enabled.
 	ReqStructFields []gstructs.Field // Request struct fields.
+	Path            string
 }
 
 func checkAndCreateFuncInfo(
@@ -288,6 +302,7 @@ func checkAndCreateFuncInfo(
 	}
 	if handlerFunc, ok := f.(HandlerFunc); ok {
 		funcInfo.Func = handlerFunc
+
 		return
 	}
 
@@ -296,31 +311,31 @@ func checkAndCreateFuncInfo(
 		inputObject    reflect.Value
 		inputObjectPtr interface{}
 	)
-	if reflectType.NumIn() != 1 || reflectType.NumOut() != 2 {
+	if reflectType.NumIn() != 2 || reflectType.NumOut() != 2 {
 		if pkgPath != "" {
 			err = gerror.NewCodef(
 				gcode.CodeInvalidParameter,
-				`invalid handler: %s.%s.%s defined as "%s", but "func(*JsonRpcConnection)" or "func(*BizReq)(*BizRes, error)" is required`,
+				`invalid handler: %s.%s.%s defined as "%s", but "func(JsonRpcConnection)" or "func(context.Context, *BizReq)(*BizRes, error)" is required`,
 				pkgPath, structName, methodName, reflectType.String(),
 			)
 		} else {
 			err = gerror.NewCodef(
 				gcode.CodeInvalidParameter,
-				`invalid handler: defined as "%s", but "func(*JsonRpcConnection)" or "func(*BizReq)(*BizRes, error)" is required`,
+				`invalid handler: defined as "%s", but "func(JsonRpcConnection)" or "func(context.Context, *BizReq)(*BizRes, error)" is required`,
 				reflectType.String(),
 			)
 		}
 		return
 	}
 
-	//if !reflectType.In(0).Implements(reflect.TypeOf((*context.Context)(nil)).Elem()) {
-	//	err = gerror.NewCodef(
-	//		gcode.CodeInvalidParameter,
-	//		`invalid handler: defined as "%s", but the first input parameter should be type of "context.Context"`,
-	//		reflectType.String(),
-	//	)
-	//	return
-	//}
+	if !reflectType.In(0).Implements(reflect.TypeOf((*context.Context)(nil)).Elem()) {
+		err = gerror.NewCodef(
+			gcode.CodeInvalidParameter,
+			`invalid handler: defined as "%s", but the first input parameter should be type of "context.Context"`,
+			reflectType.String(),
+		)
+		return
+	}
 
 	if !reflectType.Out(1).Implements(reflect.TypeOf((*error)(nil)).Elem()) {
 		err = gerror.NewCodef(
@@ -331,8 +346,8 @@ func checkAndCreateFuncInfo(
 		return
 	}
 
-	if reflectType.In(0).Kind() != reflect.Ptr ||
-		(reflectType.In(0).Kind() == reflect.Ptr && reflectType.In(0).Elem().Kind() != reflect.Struct) {
+	if reflectType.In(1).Kind() != reflect.Ptr ||
+		(reflectType.In(1).Kind() == reflect.Ptr && reflectType.In(1).Elem().Kind() != reflect.Struct) {
 		err = gerror.NewCodef(
 			gcode.CodeInvalidParameter,
 			`invalid handler: defined as "%s", but the second input parameter should be type of pointer to struct like "*BizReq"`,
@@ -357,8 +372,9 @@ func checkAndCreateFuncInfo(
 
 	funcInfo.IsStrictRoute = true
 
-	inputObject = reflect.New(funcInfo.Type.In(0).Elem())
+	inputObject = reflect.New(funcInfo.Type.In(1).Elem())
 	inputObjectPtr = inputObject.Interface()
+	gmetaPath := gmeta.Get(inputObjectPtr, gtag.Path).String()
 
 	// It retrieves and returns the request struct fields.
 	fields, err := gstructs.Fields(gstructs.FieldsInput{
@@ -368,28 +384,29 @@ func checkAndCreateFuncInfo(
 	if err != nil {
 		return funcInfo, err
 	}
+	funcInfo.Path = gmetaPath
 	funcInfo.ReqStructFields = fields
-	funcInfo.Func = createRouterFunc(funcInfo)
+	funcInfo.Func = createRouterFunc(funcInfo, funcInfo.ReqStructFields)
 	return
 }
-func createRouterFunc(funcInfo handlerFuncInfo) func(conn JsonRpcConnection) {
+func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(conn JsonRpcConnection) {
 	return func(conn JsonRpcConnection) {
 		var (
 			ok          bool
 			err         error
 			inputValues = []reflect.Value{
-				//reflect.ValueOf(conn.GetRpcRequest().ctx),
+				reflect.ValueOf(conn.GetRpcRequest().ctx),
 			}
 		)
-		if funcInfo.Type.NumIn() == 1 {
+		if funcInfo.Type.NumIn() == 2 {
 			var inputObject reflect.Value
-			if funcInfo.Type.In(0).Kind() == reflect.Ptr {
-				inputObject = reflect.New(funcInfo.Type.In(0).Elem())
-				err = doParse(conn, inputObject.Interface(), parseTypeRequest)
+			if funcInfo.Type.In(1).Kind() == reflect.Ptr {
+				inputObject = reflect.New(funcInfo.Type.In(1).Elem())
+				err = doParse(conn, fields, inputObject.Interface(), parseTypeRequest)
 
 			} else {
-				inputObject = reflect.New(funcInfo.Type.In(0).Elem()).Elem()
-				err = doParse(conn, inputObject.Addr().Interface(), parseTypeRequest)
+				inputObject = reflect.New(funcInfo.Type.In(1).Elem()).Elem()
+				err = doParse(conn, fields, inputObject.Addr().Interface(), parseTypeRequest)
 			}
 			if err != nil {
 				conn.WriteError(500, err.Error())
@@ -423,7 +440,7 @@ func createRouterFunc(funcInfo handlerFuncInfo) func(conn JsonRpcConnection) {
 }
 
 // doParse parses the request data to struct/structs according to request type.
-func doParse(conn JsonRpcConnection, pointer interface{}, requestType int) error {
+func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{}, requestType int) error {
 	var (
 		reflectVal1  = reflect.ValueOf(pointer)
 		reflectKind1 = reflectVal1.Kind()
@@ -454,7 +471,15 @@ func doParse(conn JsonRpcConnection, pointer interface{}, requestType int) error
 
 		default:
 			err = conn.ReadParams(&data)
-			err = conn.ReadParams(pointer)
+
+			if err != nil {
+				return err
+			}
+			err = mergeDefaultStructValue(fields, data, requestType)
+			if err != nil {
+				return err
+			}
+			err = gconv.Structs(data, pointer)
 			if err != nil {
 				return err
 			}
@@ -496,6 +521,43 @@ func doParse(conn JsonRpcConnection, pointer interface{}, requestType int) error
 		}
 	}
 	return nil
+}
+
+// mergeDefaultStructValue merges the request parameters with default values from struct tag definition.
+func mergeDefaultStructValue(fields []gstructs.Field, data map[string]interface{}, pointer interface{}) error {
+
+	if len(fields) > 0 {
+		for _, field := range fields {
+			if tagValue := field.TagDefault(); tagValue != "" {
+				mergeTagValueWithFoundKey(data, false, field.Name(), field.Name(), tagValue)
+			}
+		}
+		return nil
+	}
+
+	// provide non strict routing
+	tagFields, err := gstructs.TagFields(pointer, []string{gtag.DefaultShort, gtag.Default})
+	if err != nil {
+		return err
+	}
+	if len(tagFields) > 0 {
+		for _, field := range tagFields {
+			mergeTagValueWithFoundKey(data, false, field.Name(), field.Name(), field.TagValue)
+		}
+	}
+
+	return nil
+}
+
+// mergeTagValueWithFoundKey merges the request parameters when the key does not exist in the map or overwritten is true or the value is nil.
+func mergeTagValueWithFoundKey(data map[string]interface{}, overwritten bool, findKey string, fieldName string, tagValue interface{}) {
+	if foundKey, foundValue := gutil.MapPossibleItemByKey(data, findKey); foundKey == "" {
+		data[fieldName] = tagValue
+	} else {
+		if overwritten || foundValue == nil {
+			data[foundKey] = tagValue
+		}
+	}
 }
 func RemoveFunc(method string) {
 	lock.Lock()

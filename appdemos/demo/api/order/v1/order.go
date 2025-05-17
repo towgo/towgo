@@ -7,7 +7,7 @@ import (
 )
 
 type GetListReq struct {
-	g.Meta `path:"/user/list"`
+	g.Meta `path:"/order/list"`
 	model.PageReq
 }
 type GetListRes struct {
@@ -15,28 +15,30 @@ type GetListRes struct {
 }
 
 type DetailReq struct {
-	g.Meta `path:"/user/detail"`
+	g.Meta `path:"/order/detail"`
 	Id     int `p:"id"`
 }
 type DetailRes struct {
-	*entity.User
+	*entity.Order
 }
 
 type CreateReq struct {
-	g.Meta `path:"/user/create"`
-	entity.User
+	g.Meta `path:"/order/create"`
+	entity.Order
 }
 type CreateRes struct {
 }
 
 type UpdateReq struct {
-	g.Meta `path:"/user/update"`
-	entity.User
+	g.Meta `path:"/order/update"`
+	entity.Order
 }
 type UpdateRes struct{}
 
 type DeleteReq struct {
-	g.Meta `path:"/user/delete"`
+	g.Meta `path:"/order/delete"`
 	Id     int `p:"id"  v:"required|min:1#id不能为空|id最小为1"`
 }
-type DeleteRes struct{}
+type DeleteRes struct {
+	entity.Order
+}

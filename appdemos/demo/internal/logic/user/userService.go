@@ -14,10 +14,18 @@ func New() *UserService {
 }
 func (userService *UserService) List(ctx context.Context, req *model.PageReq) (res *model.ListRes, err error) {
 	var (
-		clr = dao.User.Columns()
-		orm = dao.User.Ctx(ctx)
+		clr   = dao.User.Columns()
+		orm   = dao.User.Ctx(ctx)
+		count = 0
+		list  []entity.User
 	)
-	err = orm.Page(req.PageNum, req.PageSize).Order(clr.Id+" desc").ScanAndCount(&res.Rows, &res.Count, false)
+	err = orm.Page(req.PageNum, req.PageSize).Order(clr.Id+" desc").ScanAndCount(&list, &count, false)
+	if err != nil {
+		return
+	}
+	res = &model.ListRes{}
+	res.Rows = list
+	res.Count = count
 	if err != nil {
 		return
 	}
