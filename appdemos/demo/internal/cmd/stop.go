@@ -12,6 +12,10 @@ var Stop = gcmd.Command{
 	Usage: "stop",
 	Brief: "stop http server",
 	Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
+		err = server.Shutdown()
+		if err != nil {
+			return err
+		}
 		pm := processmanager.GetManager()
 		if pm.Stop() {
 			glog.Infof(ctx, "停止成功")
@@ -19,6 +23,6 @@ var Stop = gcmd.Command{
 			glog.Infof(ctx, "停止失败")
 		}
 
-		return nil
+		return err
 	},
 }

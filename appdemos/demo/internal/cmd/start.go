@@ -13,7 +13,7 @@ var Start = gcmd.Command{
 	Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
 		pm := processmanager.GetManager()
 		if pm.Start() {
-			err = start()
+			start()
 		} else {
 			err = pm.Error
 		}

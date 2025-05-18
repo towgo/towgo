@@ -15,10 +15,14 @@ var Restart = gcmd.Command{
 		pm := processmanager.GetManager()
 		if pm.ReStart() {
 			glog.Infof(ctx, "重启成功")
-			err = start()
+			err = server.Shutdown()
+			if err != nil {
+				return err
+			}
+			start()
 		} else {
 			glog.Infof(ctx, "停止失败")
 		}
-		return nil
+		return err
 	},
 }
