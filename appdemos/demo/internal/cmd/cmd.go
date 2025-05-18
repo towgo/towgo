@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/glog"
 	"github.com/towgo/towgo/appdemos/demo/internal/controller/hello"
@@ -29,6 +30,7 @@ func start() error {
 	if err != nil {
 		return err
 	}
-	glog.Infof(ctx, "启动成功 %+v", port)
-	return http.ListenAndServe("0.0.0.0:"+port.String(), nil)
+	listenAddr := fmt.Sprintf("0.0.0.0:%s", port.String())
+	glog.Infof(ctx, "启动成功 %+v", listenAddr)
+	return http.ListenAndServe(listenAddr, nil)
 }
