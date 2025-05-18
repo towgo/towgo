@@ -46,5 +46,5 @@ func Sync(ctx context.Context) error {
 			glog.Error(ctx, err)
 		}
 	}
-	return nil
+	return err
 }

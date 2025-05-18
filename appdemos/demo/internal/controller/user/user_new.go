@@ -15,6 +15,6 @@ type ControllerV1 struct {
 
 func NewV1() user.IUserV1 {
 	return &ControllerV1{
-		userService: &user2.UserService{},
+		userService: user2.New(),
 	}
 }
