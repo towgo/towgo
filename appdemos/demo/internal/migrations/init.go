@@ -13,22 +13,32 @@ var Migrations []interface{}
 var gormEngine *gorm.DB
 
 func init() {
-	var err error
-	dbConfig := g.DB().GetConfig()
-	dsn := strings.Replace(dbConfig.Link, dbConfig.Type+":", "", 1) // 只替换第一个匹配项
-	gormEngine, err = gorm.Open(mysql.Open(dsn))
-	if err != nil {
-		panic(err)
+
+}
+func connDb() error {
+	if gormEngine == nil {
+		var err error
+		dbConfig := g.DB().GetConfig()
+		dsn := strings.Replace(dbConfig.Link, dbConfig.Type+":", "", 1) // 只替换第一个匹配项
+		gormEngine, err = gorm.Open(mysql.Open(dsn))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 func AddMigrate(d ...interface{}) {
 	Migrations = append(Migrations, d...)
 }
 
-func Sync(ctx context.Context) {
-	err := gormEngine.AutoMigrate(Migrations...)
+func Sync(ctx context.Context) error {
+	err := connDb()
 	if err != nil {
-		glog.Error(ctx, err)
+		return err
+	}
+	err = gormEngine.AutoMigrate(Migrations...)
+	if err != nil {
+		return err
 	}
 	for _, m := range Migrations {
 		err = gormEngine.AutoMigrate(m)
@@ -36,4 +46,5 @@ func Sync(ctx context.Context) {
 			glog.Error(ctx, err)
 		}
 	}
+	return nil
 }

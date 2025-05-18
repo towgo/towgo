@@ -198,6 +198,60 @@ func SetFunc(method string, f func(JsonRpcConnection)) *Api {
 	funcs[method] = api
 	return api
 }
+func RemoveFunc(method string) {
+	lock.Lock()
+	defer lock.Unlock()
+	delete(funcs, method)
+}
+
+// 委托执行任务
+func Exec(rpcConn JsonRpcConnection) {
+	if BeforExec != nil {
+		BeforExec(rpcConn)
+	}
+	rpcResponse := rpcConn.GetRpcResponse()
+	rpcRequest := rpcConn.GetRpcRequest()
+	if rpcRequest == nil {
+		rpcResponse.Error.Set(-32601, "")
+		rpcConn.Write()
+		return
+	}
+
+	if rpcRequest.Method == "" {
+		rpcResponse.Error.Set(-32601, "")
+		rpcConn.Write()
+		return
+	}
+
+	//判断是否锁定
+	_, ok := lockedMethods.Load(rpcRequest.Method)
+	if ok {
+		rpcResponse.Error.Set(500, "Method has been locked!")
+		rpcConn.Write()
+		return
+	}
+
+	api, exists := funcs[rpcRequest.Method]
+	// 判断委托是否存在
+	if !exists {
+		//如果注册了Method not found处理函数  不进行默认响应
+		if OnMethodNotFound != nil {
+			OnMethodNotFound(rpcConn)
+			return
+		}
+		//默认响应 Method not found找不到方法
+		rpcResponse.Error.Set(-32601, "")
+		rpcConn.Write()
+		return
+	}
+
+	// 执行委托的程序
+	api.Exec(rpcConn)
+	if AfterExec != nil {
+		AfterExec(rpcConn)
+	}
+}
+
 func BindFunc(method string, f func(JsonRpcConnection)) {
 	SetFunc(method, f)
 }
@@ -557,58 +611,5 @@ func mergeTagValueWithFoundKey(data map[string]interface{}, overwritten bool, fi
 		if overwritten || foundValue == nil {
 			data[foundKey] = tagValue
 		}
-	}
-}
-func RemoveFunc(method string) {
-	lock.Lock()
-	defer lock.Unlock()
-	delete(funcs, method)
-}
-
-// 委托执行任务
-func Exec(rpcConn JsonRpcConnection) {
-	if BeforExec != nil {
-		BeforExec(rpcConn)
-	}
-	rpcResponse := rpcConn.GetRpcResponse()
-	rpcRequest := rpcConn.GetRpcRequest()
-	if rpcRequest == nil {
-		rpcResponse.Error.Set(-32601, "")
-		rpcConn.Write()
-		return
-	}
-
-	if rpcRequest.Method == "" {
-		rpcResponse.Error.Set(-32601, "")
-		rpcConn.Write()
-		return
-	}
-
-	//判断是否锁定
-	_, ok := lockedMethods.Load(rpcRequest.Method)
-	if ok {
-		rpcResponse.Error.Set(500, "Method has been locked!")
-		rpcConn.Write()
-		return
-	}
-
-	api, exists := funcs[rpcRequest.Method]
-	// 判断委托是否存在
-	if !exists {
-		//如果注册了Method not found处理函数  不进行默认响应
-		if OnMethodNotFound != nil {
-			OnMethodNotFound(rpcConn)
-			return
-		}
-		//默认响应 Method not found找不到方法
-		rpcResponse.Error.Set(-32601, "")
-		rpcConn.Write()
-		return
-	}
-
-	// 执行委托的程序
-	api.Exec(rpcConn)
-	if AfterExec != nil {
-		AfterExec(rpcConn)
 	}
 }
