@@ -11,7 +11,6 @@ var DbSync = gcmd.Command{
 	Usage: "DbSync 数据库迁移",
 	Brief: " sync db info 数据库迁移",
 	Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
-		migrations.Sync(ctx)
-		return nil
+		return migrations.Sync(ctx)
 	},
 }
