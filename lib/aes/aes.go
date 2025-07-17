@@ -49,20 +49,16 @@ func (i *IO) Write(p []byte) (n int, err error) {
 func (i *IO) cutRead(p []byte) (n int, err error) {
 	readBufDataLen := len(i.readBufData)
 	pLen := len(p)
-
 	n = copy(p, i.readBufData)
-
 	if readBufDataLen > pLen {
-		i.readBufData = i.readBufData[n-1:]
+		i.readBufData = i.readBufData[n:]
 	} else {
 		i.readBufData = []byte{}
 	}
-
 	return
 }
 
 func (i *IO) Read(p []byte) (n int, err error) {
-
 	if len(i.readBufData) > 0 {
 		return i.cutRead(p)
 	}
@@ -70,19 +66,21 @@ func (i *IO) Read(p []byte) (n int, err error) {
 	var readDataBuf []byte
 	if len(i.readBufEncodeData) > 0 {
 		readDataBuf = append(readDataBuf, i.readBufEncodeData...)
-		i.readBufEncodeData = []byte{}
+		i.readBufEncodeData = nil
 	}
 	for {
 
 		readDataBufLen := len(readDataBuf)
 
 		if readDataBufLen > i.maxDataLength {
+			log.Print("超过加密允许的最大数据长度")
 			return 0, errors.New("超过加密允许的最大数据长度")
 		}
 
 		//读取数据
 		readBuf := make([]byte, i.readBufSize)
 		rn, err := i.rw.Read(readBuf)
+		//log.Print("读到了", rn, "条数据")
 		if err != nil {
 			return 0, err
 		}
@@ -98,36 +96,26 @@ func (i *IO) Read(p []byte) (n int, err error) {
 		}
 
 		//有尾帧数据,数据完整,可以解密
+		//log.Print("有尾帧数据,数据完整,可以解密")
 
 		//拆包
 		spBuf := bytes.Split(readDataBuf, []byte{DATAEND})
+		//log.Print("共找到", len(spBuf)-1, "组数据包")
+		residualData := spBuf[len(spBuf)-1]
+		intactEncodeData := spBuf[0 : len(spBuf)-1]
+		if len(residualData) > 0 {
+			i.readBufEncodeData = residualData
+		} else {
+			i.readBufEncodeData = nil
+		}
 
-		for k, v := range spBuf {
-			if len(v) == 0 {
-				continue
+		for _, v := range intactEncodeData {
+			b, err := AesDecrypt(string(v))
+			if err != nil {
+				log.Print(err.Error())
+				return 0, err
 			}
-
-			if len(spBuf)-1 == k {
-				if v[len(v)-1] == DATAEND {
-					b, err := AesDecrypt(string(v[0 : len(v)-1]))
-					if err != nil {
-						log.Print(err.Error())
-						return 0, err
-					}
-					i.readBufData = append(i.readBufData, b...)
-
-				} else {
-					i.readBufEncodeData = v
-				}
-			} else {
-				b, err := AesDecrypt(string(v))
-				if err != nil {
-					log.Print(err.Error())
-					return 0, err
-				}
-				i.readBufData = append(i.readBufData, b...)
-			}
-
+			i.readBufData = append(i.readBufData, b...)
 		}
 
 		return i.cutRead(p)
@@ -136,8 +124,8 @@ func (i *IO) Read(p []byte) (n int, err error) {
 
 func NewIOWrapper(rw io.ReadWriteCloser) *IO {
 	return &IO{
-		readBufSize:   1,       //读缓冲区1Mb
-		maxDataLength: 1024000, //加密数据允许的最大长度100Mb
+		readBufSize:   102400,  //读缓冲区10MB
+		maxDataLength: 1024000, //加密数据允许的最大长度100MB
 		rw:            rw,
 	}
 }
@@ -166,6 +154,12 @@ func AesDecryptStruct(destStruct any, text string) error {
 }
 
 func AesEncrypt(text []byte) (encrypt []byte, err error) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			log.Print(err)
+		}
+	}()
 	//生成cipher.Block 数据块
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -191,6 +185,12 @@ func pad(ciphertext []byte, blockSize int) []byte {
 }
 
 func AesDecrypt(text string) ([]byte, error) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			log.Print(err)
+		}
+	}()
 	decode_data, err := base64.StdEncoding.DecodeString(text)
 	if err != nil {
 		return nil, err

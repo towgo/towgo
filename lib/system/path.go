@@ -22,6 +22,13 @@ func GetPathSymbol() string {
 	return pathSymbol
 }
 
+func ReplaceRelativePath(s string) string {
+	if len(s) >= 2 && (strings.HasPrefix(s, "./") || strings.HasPrefix(s, ".\\")) {
+		return GetPathOfProgram() + s[2:]
+	}
+	return s
+}
+
 func GetPathOfProgram() string {
 	if !IsRelease() {
 		return "." + GetPathSymbol()

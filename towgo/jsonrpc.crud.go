@@ -120,7 +120,11 @@ func (c *Crud) update(rpcConn JsonRpcConnection) {
 func (c *Crud) delete(rpcConn JsonRpcConnection) {
 	modelType := c.modelObject
 	model := reflect.New(reflect.TypeOf(modelType)).Interface()
-	rpcConn.ReadParams(&model)
+
+	var groupInt []int64
+	var groupString []string
+
+	rpcConn.ReadParams(&model, &groupInt, &groupString)
 
 	jsonrpcCtx := rpcConn.GetRpcRequest().Ctx
 	ctx := context.Background()
@@ -135,6 +139,50 @@ func (c *Crud) delete(rpcConn JsonRpcConnection) {
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
 		rpcConn.Write()
+		return
+	}
+
+	if len(groupInt) > 0 {
+		sql := basedboperat.ReflectModelPKJsonKey(model) + " in ("
+		var args []interface{}
+		for n, v := range groupInt {
+			if n == 0 {
+				sql = sql + "?"
+			} else {
+				sql = sql + ",?"
+			}
+			args = append(args, v)
+		}
+		sql = sql + ")"
+		count, err := session.Delete(model, nil, sql, args...)
+		if err != nil {
+			rpcConn.GetRpcResponse().Error.Set(500, err.Error())
+			rpcConn.Write()
+			return
+		}
+		rpcConn.WriteResult(count)
+		return
+	}
+
+	if len(groupString) > 0 {
+		sql := basedboperat.ReflectModelPKJsonKey(model) + " in ("
+		var args []interface{}
+		for n, v := range groupString {
+			if n == 0 {
+				sql = sql + "?"
+			} else {
+				sql = sql + ",?"
+			}
+			args = append(args, v)
+		}
+		sql = sql + ")"
+		count, err := session.Delete(model, nil, sql, args...)
+		if err != nil {
+			rpcConn.GetRpcResponse().Error.Set(500, err.Error())
+			rpcConn.Write()
+			return
+		}
+		rpcConn.WriteResult(count)
 		return
 	}
 
