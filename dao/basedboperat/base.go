@@ -380,3 +380,56 @@ func ReflectStructID(obj interface{}) interface{} {
 
 	return field.Interface()
 }
+
+func ReflectModelPKJsonKey(obj interface{}) string {
+	val := reflect.ValueOf(obj)
+	// 确保传入的是结构体或结构体指针
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return ""
+	}
+
+	t := val.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		xormTag, hasXorm := field.Tag.Lookup("xorm")
+		if !hasXorm {
+			continue
+		}
+
+		// 检查xorm标签是否包含"pk"
+		tags := strings.Fields(xormTag)
+		foundPk := false
+		for _, tag := range tags {
+			if tag == "pk" {
+				foundPk = true
+				break
+			}
+		}
+
+		if !foundPk {
+			continue
+		}
+
+		// 处理json标签或字段名
+		jsonTag, hasJson := field.Tag.Lookup("json")
+		outputName := field.Name
+
+		if hasJson {
+			// 移除json标签中的额外选项（如omitempty）
+			if idx := strings.Index(jsonTag, ","); idx != -1 {
+				jsonTag = jsonTag[:idx]
+			}
+			outputName = jsonTag
+		} else {
+			// 没有json标签时，将字段名转换为小写
+			outputName = strings.ToLower(field.Name)
+		}
+
+		return outputName
+	}
+
+	return "id"
+}
