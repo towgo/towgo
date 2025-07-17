@@ -18,6 +18,8 @@ import (
 	"github.com/towgo/towgo/lib/www"
 )
 
+var API_HEAD = "towgocdn"
+
 type GatewayServer struct {
 	clusterToken                       string
 	edgeServerNodeHttpPingTimeoutLimit int64
@@ -36,11 +38,15 @@ type GatewayEdgeServerNode struct {
 	EdgeServerNodeConfig `xorm:"extends"`
 }
 
+func SetAPIHead(head string) {
+	API_HEAD = head
+}
+
 func InitServerApi() {
-	SetFunc("/towgocdn/edgeServerNode/reg", reg)
-	SetFunc("/towgocdn/getEdgeServerNodeInfo", getEdgeServerNodeInfo)
-	SetFunc("/towgocdn/edgeServerNode/ping", ping)
-	SetFunc("/towgocdn/edgeServerNode/method/jsonrpcroute/list", edgeServerNodeMethodJsonrpcRouteList)
+	SetFunc("/"+API_HEAD+"/edgeServerNode/reg", reg)
+	SetFunc("/"+API_HEAD+"/getEdgeServerNodeInfo", getEdgeServerNodeInfo)
+	SetFunc("/"+API_HEAD+"/edgeServerNode/ping", ping)
+	SetFunc("/"+API_HEAD+"/edgeServerNode/method/jsonrpcroute/list", edgeServerNodeMethodJsonrpcRouteList)
 }
 
 var gateWayServers []*GatewayServer

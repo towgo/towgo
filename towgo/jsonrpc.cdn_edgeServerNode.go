@@ -30,8 +30,7 @@ type EdgeServerNodeConfig struct {
 	DisableHealthCheck bool     `xorm:"-" gorm:"-"`                      //关闭心跳检测（默认服务端将启用心跳检测，在规定的时间内超时后服务端会主动端看）
 	ServerUrl          string   `xorm:"-" gorm:"-"`                      //模块服务端url
 	ClusterToken       string   `json:"cluster_token" xorm:"-" gorm:"-"` //集群token  如果token不正确不允许加入
-	HttpJsonrpcPath    string   `json:"http_jsonrpc_path"`
-	Schema             string   `json:"schema"` // eg: http | https
+	Schema             string   `json:"schema"`                          // eg: http | https
 	Port               string   `json:"port"`
 	Type               string   `json:"type"`
 	EdgeServerNodeHost string   `json:"edge_server_node_host"`
@@ -97,7 +96,7 @@ func (c *EdgeServerNode) Call(request *Jsonrpcrequest, callback func(JsonRpcConn
 
 func (c *EdgeServerNode) regModule() {
 	request := NewJsonrpcrequest()
-	request.Method = "/towgocdn/edgeServerNode/reg"
+	request.Method = "/" + API_HEAD + "/edgeServerNode/reg"
 	request.Params = c.EdgeServerNodeConfig
 	c.websocketConn.Push(request)
 }
