@@ -27,7 +27,9 @@ require (
 	xorm.io/builder v0.3.13
 	xorm.io/xorm v1.3.9
 )
+
 replace github.com/olekukonko/tablewriter => github.com/olekukonko/tablewriter v0.0.5
+
 require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
