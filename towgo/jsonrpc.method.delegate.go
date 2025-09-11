@@ -286,7 +286,8 @@ func BindObject(method string, object interface{}) {
 
 		funcInfo, err := checkAndCreateFuncInfo(reflectValue.Method(i).Interface(), pkgPath, objName, methodName)
 		if err != nil {
-			panic(err)
+			fmt.Printf("JsonRpc路由加载失败 [%s] : %+v\n", methodName, err.Error())
+			continue
 		}
 		uri := mergeBuildInNameToPattern(method, structName, methodName, true)
 		if funcInfo.Path != "" {
