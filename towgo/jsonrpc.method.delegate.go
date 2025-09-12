@@ -28,6 +28,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/towgo/towgo/lib/system"
 )
@@ -286,7 +287,7 @@ func BindObject(method string, object interface{}) {
 
 		funcInfo, err := checkAndCreateFuncInfo(reflectValue.Method(i).Interface(), pkgPath, objName, methodName)
 		if err != nil {
-			fmt.Printf("JsonRpc路由加载失败 [%s] [%s] : %+v\n", method, methodName, err.Error())
+			fmt.Printf("%s [WARN] JsonRpc路由加载失败 函数格式检查不通过 [%s] [%s] : %+v\n", time.Now().Format("2006-01-02 15:04:05"), method, methodName, err.Error())
 			continue
 		}
 		uri := mergeBuildInNameToPattern(method, structName, methodName, true)
