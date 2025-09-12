@@ -12,10 +12,8 @@ func GetConfig() *Config {
 		config, err := New()
 		conf = config
 		if err != nil {
-			log.Printf(" %+v", err)
-		}
-		if err = conf.LoadConfig(); err != nil {
 			log.Printf("%+v", err)
+			return nil
 		}
 	}
 	return conf

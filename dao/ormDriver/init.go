@@ -12,8 +12,13 @@ import (
 
 var dbCfg Config
 
-func init() {
-	err := tcfg.GetConfig().GetDataToStruct(ConfigNodeNameDatabase, &dbCfg)
+func InitDatabase() {
+	err := tcfg.GetConfig().LoadConfig()
+	if err != nil {
+		log.Error(terror.Wrap(err, "database config init error"))
+		return
+	}
+	err = tcfg.GetConfig().GetDataToStruct(ConfigNodeNameDatabase, &dbCfg)
 	if err != nil {
 		log.Error(terror.Wrap(err, "database config init error"))
 		return
