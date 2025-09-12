@@ -7,19 +7,17 @@ import (
 
 var conf *Config
 
-func init() {
-	config, err := New()
-	conf = config
-	if err != nil {
-		log.Printf(" %+v", err)
-		return
-	}
-	if err = conf.LoadConfig(); err != nil {
-		log.Printf("%+v", err)
-		return
-	}
-}
 func GetConfig() *Config {
+	if conf == nil {
+		config, err := New()
+		conf = config
+		if err != nil {
+			log.Printf(" %+v", err)
+		}
+		if err = conf.LoadConfig(); err != nil {
+			log.Printf("%+v", err)
+		}
+	}
 	return conf
 }
 
