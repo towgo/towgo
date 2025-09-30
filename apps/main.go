@@ -1,7 +1,7 @@
 package main
 
-import "github.com/towgo/towgo/os/log"
+import "github.com/towgo/towgo/os/tlog"
 
 func main() {
-	log.Printf("123 %d", 123)
+	tlog.Printf("123 %d", 123)
 }

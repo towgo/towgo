@@ -71,7 +71,6 @@ func (c *Config) Data() map[string]interface{} {
 // "x.y.z" for map item.
 // "x.0.y" for slice item.
 func (c *Config) Get(pattern string) (interface{}, error) {
-	log.Printf("C=%+v", c)
 	if c.adapter == nil {
 		return nil, terror.New("adapter is nil")
 	}

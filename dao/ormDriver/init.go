@@ -6,8 +6,8 @@ import (
 	"github.com/towgo/towgo/dao/ormDriver/gormDriver"
 	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"github.com/towgo/towgo/errors/terror"
-	"github.com/towgo/towgo/os/log"
 	"github.com/towgo/towgo/os/tcfg"
+	"github.com/towgo/towgo/os/tlog"
 )
 
 var dbCfg Config
@@ -15,12 +15,12 @@ var dbCfg Config
 func InitDatabase() {
 	err := tcfg.GetConfig().LoadConfig()
 	if err != nil {
-		log.Error(terror.Wrap(err, "database config init error"))
+		tlog.Error(terror.Wrap(err, "database config init error"))
 		return
 	}
 	err = tcfg.GetConfig().GetDataToStruct(ConfigNodeNameDatabase, &dbCfg)
 	if err != nil {
-		log.Error(terror.Wrap(err, "database config init error"))
+		tlog.Error(terror.Wrap(err, "database config init error"))
 		return
 	}
 	if dbCfg.Mode == "" {

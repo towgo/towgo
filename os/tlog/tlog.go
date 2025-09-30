@@ -1,4 +1,4 @@
-package log
+package tlog
 
 func init() {
 	//g.Config()
