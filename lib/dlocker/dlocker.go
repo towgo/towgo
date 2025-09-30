@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"github.com/towgo/towgo/lib/system"
 )
 
@@ -21,7 +20,7 @@ var globalCheckRate int64 = 1
 var lockExpireLimit int64 = 120
 
 func init() {
-	xormDriver.Sync2(new(Locker))
+	basedboperat.Sync(new(Locker))
 	autoClear()
 }
 
@@ -32,8 +31,10 @@ func SetCheckRate(rate int64) {
 func autoClear() {
 	go func() {
 		var l Locker
+		timer := time.NewTicker(time.Second * 10)
+		defer timer.Stop()
 		for {
-			time.Sleep(time.Second * 10)
+			<-timer.C
 			basedboperat.SqlExec("delete from "+l.TableName()+" where created_at < ?", time.Now().Unix()-lockExpireLimit)
 		}
 	}()
@@ -101,6 +102,37 @@ func UnLock(method string) error {
 	return nil
 }
 
+func TryLock(method string, checkRate int64) (guid string, err error) {
+	if method == "" {
+		return "", errors.New("method can not be null")
+	}
+	if checkRate <= 0 {
+		checkRate = globalCheckRate
+	}
+	var locker *Locker
+	lockersLock.Lock()
+	lockerAny, ok := lockers.Load(method)
+	lockersLock.Unlock()
+	if ok {
+		locker = lockerAny.(*Locker)
+		locker.CreatedAt = time.Now().Unix()
+		locker.Lock()
+	} else {
+		locker = &Locker{
+			Guid:   system.GetGUID().Hex(),
+			Method: method,
+		}
+		locker.Lock()
+		lockersLock.Lock()
+		lockers.Store(method, locker)
+		lockersLock.Unlock()
+	}
+	_, err = basedboperat.Create(locker)
+	if err != nil {
+		return
+	}
+	return locker.Guid, nil
+}
 func Renewal(guid string) {
 	var locker Locker
 	basedboperat.Get(&locker, nil, "guid = ?", guid)
