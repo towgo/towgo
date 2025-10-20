@@ -35,6 +35,7 @@ type GatewayServer struct {
 type GatewayEdgeServerNode struct {
 	Guid                 string `json:"guid"  xorm:"index unique"`
 	RemoteAddr           string `json:"remote_addr"`
+	Conn                 JsonRpcConnection
 	EdgeServerNodeConfig `xorm:"extends"`
 }
 
@@ -103,6 +104,35 @@ func CallEdgeServerNode(method, token string, requestParams any, responseParams 
 		}
 		err = jrc.ReadResult(responseParams)
 	})
+	request.Await()
+	return
+}
+
+func CallEdgeServerNodeByClientID(clientID, method, token string, requestParams any, responseParams any) (err error) {
+	err = errors.New("RPC调用失败,远程网关无法连接")
+	request := NewJsonrpcrequest()
+	request.Method = method
+	request.Params = requestParams
+	request.Session = token
+	l := len(gateWayServers)
+	if l == 0 {
+		return
+	}
+
+	nodeInterface, ok := gateWayServers[rand.Intn(l)].edgeServerNodeWebsocketMap.Load(clientID)
+	if !ok {
+		return errors.New("client id 不存在")
+	}
+	node := nodeInterface.(JsonRpcConnection)
+	node.Call(request, func(jrc JsonRpcConnection) {
+		resp := jrc.GetRpcResponse()
+		if resp.Error.Code != 200 {
+			err = errors.New(resp.Error.Message)
+			return
+		}
+		err = jrc.ReadResult(responseParams)
+	})
+
 	request.Await()
 	return
 }
@@ -177,19 +207,13 @@ func togocdn_websocket_edge_server_node_reg(rpcConn JsonRpcConnection) {
 
 	node.Guid = rpcConn.GUID()
 	node.RemoteAddr = rpcConn.GetRemoteAddr()
-
+	node.Conn = rpcConn
 	for _, gatewayServer := range gateWayServers {
 		if node.EdgeServerNodeConfig.ClusterToken != gatewayServer.clusterToken {
 			log.Print("集群token错误 无法注册")
 			continue
 		}
 		gatewayServer.edgeServerNodeWebsocketMap.Store(rpcConn.GUID(), node)
-	}
-
-	for _, gatewayServer := range gateWayServers {
-		if node.EdgeServerNodeConfig.ClusterToken != gatewayServer.clusterToken {
-			continue
-		}
 		gatewayServer.loadbalance.StoreJsonrpcKeepaliveMethods(node.EdgeServerNodeConfig.Methods, rpcConn, node.EdgeServerNodeConfig.Priority)
 	}
 
