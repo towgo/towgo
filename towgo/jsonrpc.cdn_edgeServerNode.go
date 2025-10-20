@@ -23,6 +23,7 @@ type EdgeServerNode struct {
 }
 
 type EdgeServerNodeConfig struct {
+	ClientID           string   `json:"client_id"`
 	Priority           int64    `json:"priority"`                        //优先级
 	ModuleName         string   `json:"module_name"`                     //模块名称
 	WebFrontServerPort string   `json:"web_front_server_port"`           //模块web服务端口 (前端web服务)

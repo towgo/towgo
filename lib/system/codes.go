@@ -14,6 +14,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"reflect"
 	"regexp"
 	"sync/atomic"
 	"time"
@@ -153,4 +154,30 @@ func MD5Any(object any) string {
 	has := md5.Sum(b)
 	md5str := fmt.Sprintf("%x", has)
 	return md5str
+}
+
+func MarshalWithEmptySlices(v any) ([]byte, error) {
+	// 递归检测并替换nil切片为空切片
+	value := reflect.ValueOf(v)
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+	}
+	if value.Kind() != reflect.Struct {
+		return json.Marshal(v)
+	}
+
+	traverseStruct(&value) // 处理结构体字段
+	return json.Marshal(v)
+}
+
+func traverseStruct(v *reflect.Value) {
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if field.Kind() == reflect.Slice && field.IsNil() {
+			// 将nil切片初始化为空切片
+			field.Set(reflect.MakeSlice(field.Type(), 0, 0))
+		} else if field.Kind() == reflect.Struct {
+			traverseStruct(&field)
+		}
+	}
 }
