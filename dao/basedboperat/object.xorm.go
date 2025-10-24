@@ -42,7 +42,8 @@ func (orm *Xorm) HasValue(key, value any) bool {
 func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
 	orm.WithValue(DbOperateBeforeKey, FirstValue)
 	orm.currentSelectFields = selectFields
-	defer reflectMethodCall(destModel, AfterQuery, orm)
+
+	defer reflectMethodCall(destModel, "AfterQuery", orm)
 
 	cacheKey := GenerateCacheKey(destModel, PrimaryKey, selectFields, condition, conditionArgs)
 	if queryCache(destModel, cacheKey) {
@@ -76,7 +77,8 @@ func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []
 func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
 	orm.WithValue(DbOperateBeforeKey, LastValue)
 	orm.currentSelectFields = selectFields
-	defer reflectMethodCall(destModel, AfterQuery, orm)
+
+	defer reflectMethodCall(destModel, "AfterQuery", orm)
 
 	cacheKey := GenerateCacheKey(destModel, PrimaryKey, selectFields, condition, conditionArgs)
 	if queryCache(destModel, cacheKey) {
@@ -112,7 +114,8 @@ func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []s
 func (orm *Xorm) Get(destModel interface{}, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
 	orm.WithValue(DbOperateBeforeKey, GetValue)
 	orm.currentSelectFields = selectFields
-	defer reflectMethodCall(destModel, AfterQuery, orm)
+
+	defer reflectMethodCall(destModel, "AfterQuery", orm)
 
 	cacheKey := GenerateCacheKey(destModel, selectFields, condition, conditionArgs)
 	if queryCache(destModel, cacheKey) {
@@ -170,7 +173,12 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 	}
 	orm.currentSelectFields = selectFieldsTmp
 
-	err := reflectMethodCall(model, InputCheck, orm)
+	err := reflectMethodCall(model, "BeforeOperat", orm)
+	if err != nil {
+		return err
+	}
+
+	err = reflectMethodCall(model, "InputCheck", orm)
 	if err != nil {
 		return err
 	}
@@ -234,7 +242,12 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition interface{}, conditionArgs ...interface{}) (int64, error) {
 	orm.WithValue(DbOperateBeforeKey, DeleteValue)
 
-	err := reflectMethodCall(model, BeforeDelete, orm)
+	err := reflectMethodCall(model, "BeforeOperat", orm)
+	if err != nil {
+		return 0, err
+	}
+
+	err = reflectMethodCall(model, "BeforeDelete", orm)
 	if err != nil {
 		return 0, err
 	}
