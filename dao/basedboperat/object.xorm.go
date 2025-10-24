@@ -39,6 +39,7 @@ func (orm *Xorm) Value(key any) any {
 func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
 	orm.WithValue("parent_dboperat_function", "First")
 	orm.currentSelectFields = selectFields
+
 	defer reflectMethodCall(destModel, "AfterQuery", orm)
 
 	cacheKey := GenerateCacheKey(destModel, PrimaryKey, selectFields, condition, conditionArgs)
@@ -73,6 +74,7 @@ func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []
 func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
 	orm.WithValue("parent_dboperat_function", "Last")
 	orm.currentSelectFields = selectFields
+
 	defer reflectMethodCall(destModel, "AfterQuery", orm)
 
 	cacheKey := GenerateCacheKey(destModel, PrimaryKey, selectFields, condition, conditionArgs)
@@ -109,6 +111,7 @@ func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []s
 func (orm *Xorm) Get(destModel interface{}, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
 	orm.WithValue("parent_dboperat_function", "Get")
 	orm.currentSelectFields = selectFields
+
 	defer reflectMethodCall(destModel, "AfterQuery", orm)
 
 	cacheKey := GenerateCacheKey(destModel, selectFields, condition, conditionArgs)
@@ -167,7 +170,12 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 	}
 	orm.currentSelectFields = selectFieldsTmp
 
-	err := reflectMethodCall(model, "InputCheck", orm)
+	err := reflectMethodCall(model, "BeforeOperat", orm)
+	if err != nil {
+		return err
+	}
+
+	err = reflectMethodCall(model, "InputCheck", orm)
 	if err != nil {
 		return err
 	}
@@ -230,7 +238,12 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition interface{}, conditionArgs ...interface{}) (int64, error) {
 	orm.WithValue("parent_dboperat_function", "Delete")
 
-	err := reflectMethodCall(model, "BeforeDelete", orm)
+	err := reflectMethodCall(model, "BeforeOperat", orm)
+	if err != nil {
+		return 0, err
+	}
+
+	err = reflectMethodCall(model, "BeforeDelete", orm)
 	if err != nil {
 		return 0, err
 	}

@@ -1,6 +1,7 @@
 package www
 
 import (
+	"embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,8 +14,9 @@ import (
 )
 
 type WebServer struct {
-	Wwwroot string   `json:"wwwroot"`
-	Index   []string `json:"index"`
+	Wwwroot    string   `json:"wwwroot"`
+	Index      []string `json:"index"`
+	EmbeddedFS *embed.FS
 }
 
 func (webserver *WebServer) WebServerHandller(w http.ResponseWriter, r *http.Request) {
@@ -32,13 +34,29 @@ func (webserver *WebServer) WebServerHandller(w http.ResponseWriter, r *http.Req
 	var f []byte
 
 	if isFile {
-		f, err = os.ReadFile(filepath)
+		if webserver.EmbeddedFS != nil {
+			f, err = webserver.EmbeddedFS.ReadFile(filepath)
+			if err != nil {
+				f, err = os.ReadFile(filepath)
+			}
+		} else {
+			f, err = os.ReadFile(filepath)
+		}
 	} else {
 		//路径模式直接判断命中
 		path := ensureTrailingSlash(r.URL.Path)
 		for _, v := range webserver.Index {
 			filepath = wwwroot + path + v
-			f, err = os.ReadFile(filepath)
+
+			if webserver.EmbeddedFS != nil {
+				f, err = webserver.EmbeddedFS.ReadFile(filepath)
+				if err != nil {
+					f, err = os.ReadFile(filepath)
+				}
+			} else {
+				f, err = os.ReadFile(filepath)
+			}
+
 			if err == nil {
 				break
 			}
@@ -50,7 +68,16 @@ func (webserver *WebServer) WebServerHandller(w http.ResponseWriter, r *http.Req
 			for p := iter.Next(); p != ""; p = iter.Next() {
 				for _, v := range webserver.Index {
 					filepath = wwwroot + ensureTrailingSlash(p) + v
-					f, err = os.ReadFile(filepath)
+
+					if webserver.EmbeddedFS != nil {
+						f, err = webserver.EmbeddedFS.ReadFile(filepath)
+						if err != nil {
+							f, err = os.ReadFile(filepath)
+						}
+					} else {
+						f, err = os.ReadFile(filepath)
+					}
+
 					if err == nil {
 						break
 					}

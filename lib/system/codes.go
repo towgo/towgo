@@ -97,6 +97,17 @@ func RandChar(size int) string {
 	return s.String()
 }
 
+func RandCharNumber(size int) string {
+	char := "0123456789"
+	len64 := int64(len(char))
+	var s bytes.Buffer
+	for i := 0; i < size; i++ {
+		in, _ := rand.Int(rand.Reader, big.NewInt(len64))
+		s.WriteByte(char[in.Int64()])
+	}
+	return s.String()
+}
+
 func RandCharCrypto(size int) string {
 	char := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	len64 := int64(len(char))
