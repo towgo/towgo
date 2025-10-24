@@ -8,11 +8,14 @@ code by liangliangit
 package towgo
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"reflect"
 
 	"github.com/towgo/towgo/dao/basedboperat"
+	"reflect"
+	"unicode"
 )
 
 type MyKey string
@@ -132,9 +135,21 @@ func (c *Crud) update(rpcConn JsonRpcConnection) {
 	model := reflect.New(reflect.TypeOf(modelType)).Interface()
 	m := map[string]interface{}{}
 	rpcConn.ReadParams(&model, &m)
+	var updateFildArray []string
+	for k, _ := range m {
+		var buf bytes.Buffer
 
+		for i, r := range k {
+			if unicode.IsUpper(r) && i > 0 {
+				buf.WriteRune('_')
+			}
+			buf.WriteRune(unicode.ToLower(r))
+		}
+		updateFildArray = append(updateFildArray, buf.String())
+	}
 	jsonrpcCtx := rpcConn.GetRpcRequest().Ctx
 	ctx := context.Background()
+
 	for k, v := range jsonrpcCtx {
 		ctx = context.WithValue(ctx, k, v)
 	}
@@ -149,7 +164,7 @@ func (c *Crud) update(rpcConn JsonRpcConnection) {
 		return
 	}
 
-	err = session.Update(model, m, nil, nil)
+	err = session.Update(model, updateFildArray, nil, nil)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
 		rpcConn.Write()

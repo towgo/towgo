@@ -2,7 +2,6 @@ package xormDriver
 
 import (
 	"errors"
-	"log"
 	"sync"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/towgo/towgo/os/tlog"
 	"xorm.io/xorm"
 	dblog "xorm.io/xorm/log"
 	"xorm.io/xorm/names"
@@ -56,7 +56,11 @@ func syncBeans() {
 			if db == nil {
 				continue
 			}
-			db.Engine.Sync2(bean)
+			err := db.Engine.Sync2(bean)
+			if err != nil {
+				tlog.Errorf("sync beans {%+v} failed , %+v", bean, err)
+				continue
+			}
 		}
 	}()
 }
@@ -82,7 +86,7 @@ func New(dsnConfigs []DsnConfig) {
 		}
 
 		if err != nil {
-			log.Print(err.Error())
+			tlog.Print(err.Error())
 			continue
 		}
 

@@ -1,9 +1,0 @@
-{
-    "Priority":0,
-    "ModuleName":"test",
-    "ServerUrls":[
-        "ws://10.0.0.30/websocket/jsonrpc",
-        "ws://10.0.0.30/websocket/jsonrpc",
-        "ws://10.0.0.30/websocket/jsonrpc"
-    ]
-}
