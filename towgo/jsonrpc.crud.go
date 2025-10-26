@@ -14,7 +14,6 @@ import (
 	"reflect"
 
 	"github.com/towgo/towgo/dao/basedboperat"
-	"reflect"
 	"unicode"
 )
 
