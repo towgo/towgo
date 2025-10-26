@@ -2,14 +2,13 @@ package basedboperat
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
-	"unicode"
 
 	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"xorm.io/builder"
@@ -36,11 +35,9 @@ func (orm *Xorm) Value(key any) any {
 	}
 	return orm.ctx.Value(key)
 }
-func (orm *Xorm) HasValue(key, value any) bool {
-	return orm.Value(key) == value
-}
+
 func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue(DbOperateBeforeKey, FirstValue)
+	orm.WithValue("parent_dboperat_function", "First")
 	orm.currentSelectFields = selectFields
 
 	defer reflectMethodCall(destModel, "AfterQuery", orm)
@@ -75,7 +72,7 @@ func (orm *Xorm) First(destModel interface{}, PrimaryKey string, selectFields []
 
 // 获取最后条记录
 func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue(DbOperateBeforeKey, LastValue)
+	orm.WithValue("parent_dboperat_function", "Last")
 	orm.currentSelectFields = selectFields
 
 	defer reflectMethodCall(destModel, "AfterQuery", orm)
@@ -112,7 +109,7 @@ func (orm *Xorm) Last(destModel interface{}, PrimaryKey string, selectFields []s
 
 // 获取记录
 func (orm *Xorm) Get(destModel interface{}, selectFields []string, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue(DbOperateBeforeKey, GetValue)
+	orm.WithValue("parent_dboperat_function", "Get")
 	orm.currentSelectFields = selectFields
 
 	defer reflectMethodCall(destModel, "AfterQuery", orm)
@@ -147,7 +144,7 @@ func (orm *Xorm) Get(destModel interface{}, selectFields []string, condition int
 
 // 更新记录
 func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, conditionArgs ...interface{}) error {
-	orm.WithValue(DbOperateBeforeKey, UpdateValue)
+	orm.WithValue("parent_dboperat_function", "Update")
 	var selectFieldsTmp []string
 
 	if fields != nil {
@@ -183,21 +180,20 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 		return err
 	}
 
-	err = reflectMethodCall(model, UpdateCheck, orm)
+	err = reflectMethodCall(model, "UpdateCheck", orm)
 	if err != nil {
 		return err
 	}
 
-	err = reflectMethodCall(model, BeforeSave, orm)
+	err = reflectMethodCall(model, "BeforeSave", orm)
 	if err != nil {
 		return err
 	}
-	err = reflectMethodCall(model, BeforeUpdate, orm)
+	err = reflectMethodCall(model, "BeforeUpdate", orm)
 	if err != nil {
 		return err
 	}
-	defer reflectMethodCall(model, AfterSave, orm)
-	defer reflectMethodCall(model, AfterUpdate, orm)
+	defer reflectMethodCall(model, "AfterSave", orm)
 	var session *xorm.Session
 	if orm.session != nil {
 		session = orm.session
@@ -240,7 +236,7 @@ func (orm *Xorm) Update(model interface{}, fields any, condition interface{}, co
 
 // 删除记录
 func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition interface{}, conditionArgs ...interface{}) (int64, error) {
-	orm.WithValue(DbOperateBeforeKey, DeleteValue)
+	orm.WithValue("parent_dboperat_function", "Delete")
 
 	err := reflectMethodCall(model, "BeforeOperat", orm)
 	if err != nil {
@@ -251,7 +247,7 @@ func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition i
 	if err != nil {
 		return 0, err
 	}
-	defer reflectMethodCall(model, AfterDelete, orm)
+	defer reflectMethodCall(model, "AfterDelete", orm)
 	var session *xorm.Session
 	if orm.session != nil {
 		session = orm.session
@@ -271,24 +267,24 @@ func (orm *Xorm) Delete(model interface{}, PrimaryKeyID interface{}, condition i
 
 // 创建记录
 func (orm *Xorm) Create(model interface{}) (int64, error) {
-	orm.WithValue(DbOperateBeforeKey, CreateValue)
+	orm.WithValue("parent_dboperat_function", "Create")
 
-	err := reflectMethodCall(model, InputCheck, orm)
+	err := reflectMethodCall(model, "InputCheck", orm)
 	if err != nil {
 		return 0, err
 	}
-	err = reflectMethodCall(model, CreateCheck, orm)
+	err = reflectMethodCall(model, "CreateCheck", orm)
 	if err != nil {
 		return 0, err
 	}
 
-	err = reflectMethodCall(model, BeforeCreate, orm)
+	err = reflectMethodCall(model, "BeforeCreate", orm)
 	if err != nil {
 		return 0, err
 	}
 
 	defer func() {
-		reflectMethodCall(model, AfterCreate, orm)
+		reflectMethodCall(model, "AfterCreate", orm)
 	}()
 	var session *xorm.Session
 	if orm.session != nil {
@@ -331,53 +327,13 @@ func (orm *Xorm) SqlQuery(sql interface{}, args ...interface{}) (resultsSlice []
 	return session.QueryInterface(sqlsclie...)
 }
 
-/*
 // 原生sql查询解析到结构体或MAP
-
-	func (orm *Xorm) SqlQueryScan(destModel interface{}, sql interface{}, args ...interface{}) error {
-		cacheKey := GenerateCacheKey(destModel, sql, args)
-		if queryCache(destModel, cacheKey) {
-			return nil
-		}
-
-		var session *xorm.Session
-		if orm.session != nil {
-			session = orm.session
-		} else {
-			db := xormDriver.DbSlave()
-			session = db.Engine.NewSession()
-		}
-
-		sqlsclie := []interface{}{sql}
-		sqlsclie = append(sqlsclie, args...)
-		resultsSlice, err := session.QueryInterface(sqlsclie...)
-		if err != nil {
-			return err
-		}
-
-		b, err := json.Marshal(resultsSlice)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(b, destModel)
-		//setCache(destModel, cacheKey, 0)
-		return err
-	}
-*/
-var (
-	fieldNameCache = make(map[reflect.Type]map[string]string)
-	cacheMutex     = sync.RWMutex{}
-)
-
-// SqlQueryScan 优化后的SQL查询解析函数，使用标准库实现命名转换
 func (orm *Xorm) SqlQueryScan(destModel interface{}, sql interface{}, args ...interface{}) error {
-	// 检查缓存
 	cacheKey := GenerateCacheKey(destModel, sql, args)
 	if queryCache(destModel, cacheKey) {
 		return nil
 	}
 
-	// 获取数据库会话
 	var session *xorm.Session
 	if orm.session != nil {
 		session = orm.session
@@ -386,144 +342,24 @@ func (orm *Xorm) SqlQueryScan(destModel interface{}, sql interface{}, args ...in
 		session = db.Engine.NewSession()
 	}
 
-	// 执行查询
-	sqlSlice := []interface{}{sql}
-	sqlSlice = append(sqlSlice, args...)
-	resultsSlice, err := session.QueryInterface(sqlSlice...)
+	sqlsclie := []interface{}{sql}
+	sqlsclie = append(sqlsclie, args...)
+	resultsSlice, err := session.QueryInterface(sqlsclie...)
 	if err != nil {
 		return err
 	}
 
-	// 获取目标类型信息
-	destValue := reflect.ValueOf(destModel)
-	if destValue.Kind() != reflect.Ptr {
-		return fmt.Errorf("destModel must be a pointer")
+	b, err := json.Marshal(resultsSlice)
+	if err != nil {
+		return err
 	}
-
-	destValue = destValue.Elem()
-	destType := destValue.Type()
-
-	// 处理查询结果
-	if len(resultsSlice) == 0 {
-		return nil
-	}
-
-	// 如果是map类型，直接填充
-	if destValue.Kind() == reflect.Map {
-		return fillMap(destValue, resultsSlice[0])
-	}
-
-	// 处理结构体
-	return fillStruct(destValue, destType, resultsSlice[0])
+	err = json.Unmarshal(b, destModel)
+	//setCache(destModel, cacheKey, 0)
+	return err
 }
 
-// fillMap 填充map类型数据
-func fillMap(destValue reflect.Value, data map[string]interface{}) error {
-	if destValue.IsNil() {
-		destValue.Set(reflect.MakeMap(destValue.Type()))
-	}
-
-	for k, v := range data {
-		destValue.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
-	}
-	return nil
-}
-
-// fillStruct 填充结构体数据
-func fillStruct(destValue reflect.Value, destType reflect.Type, data map[string]interface{}) error {
-	// 获取字段名映射缓存
-	fieldMap := getFieldMap(destType)
-
-	for dbName, value := range data {
-		// 查找对应的结构体字段
-		fieldName, ok := fieldMap[dbName]
-		if !ok {
-			continue
-		}
-
-		// 设置字段值
-		field := destValue.FieldByName(fieldName)
-		if !field.IsValid() || !field.CanSet() {
-			continue
-		}
-
-		// 类型转换
-		val := reflect.ValueOf(value)
-		if val.Type().ConvertibleTo(field.Type()) {
-			field.Set(val.Convert(field.Type()))
-		}
-	}
-	return nil
-}
-
-// getFieldMap 获取结构体字段名映射(缓存)
-func getFieldMap(t reflect.Type) map[string]string {
-	cacheMutex.RLock()
-	if m, ok := fieldNameCache[t]; ok {
-		cacheMutex.RUnlock()
-		return m
-	}
-	cacheMutex.RUnlock()
-
-	fieldMap := make(map[string]string)
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		// 获取json标签或使用字段名
-		jsonTag := field.Tag.Get("json")
-		if jsonTag == "" {
-			jsonTag = field.Name
-		} else {
-			// 处理json标签中的选项如omitempty
-			if commaIdx := strings.Index(jsonTag, ","); commaIdx > 0 {
-				jsonTag = jsonTag[:commaIdx]
-			}
-		}
-
-		// 将驼峰转为蛇形作为数据库字段名
-		dbName := camelToSnake(jsonTag)
-		fieldMap[dbName] = field.Name
-	}
-
-	cacheMutex.Lock()
-	fieldNameCache[t] = fieldMap
-	cacheMutex.Unlock()
-
-	return fieldMap
-}
-
-// camelToSnake 将驼峰命名转为蛇形命名
-func camelToSnake(s string) string {
-	var result []rune
-	for i, r := range s {
-		if unicode.IsUpper(r) {
-			if i > 0 {
-				result = append(result, '_')
-			}
-			result = append(result, unicode.ToLower(r))
-		} else {
-			result = append(result, r)
-		}
-	}
-	return string(result)
-}
-
-// snakeToCamel 将蛇形命名转为驼峰命名
-func snakeToCamel(s string) string {
-	var result []rune
-	upperNext := false
-	for _, r := range s {
-		if r == '_' {
-			upperNext = true
-		} else {
-			if upperNext {
-				result = append(result, unicode.ToUpper(r))
-				upperNext = false
-			} else {
-				result = append(result, r)
-			}
-		}
-	}
-	return string(result)
+func (orm *Xorm) HasValue(key, value any) bool {
+	return orm.Value(key) == value
 }
 
 // 执行根据条件查询
@@ -577,12 +413,12 @@ func (orm *Xorm) QueryScan(destModel interface{}, extra interface{}, condition i
 }
 
 func (orm *Xorm) ListScan(l *List, model interface{}, destModels interface{}) {
-	orm.WithValue(DbOperateBeforeKey, ListScanValue)
+	orm.WithValue("parent_dboperat_function", "ListScan")
 	cacheKey := GenerateCacheKey(destModels, l, model)
 	if queryCache(destModels, cacheKey) {
 		queryCache(l, cacheKey+"list")
 
-		reflectSliceModelCall(destModels, AfterQuery, orm)
+		reflectSliceModelCall(destModels, "AfterQuery", orm)
 		return
 	}
 
@@ -731,7 +567,7 @@ func (orm *Xorm) ListScan(l *List, model interface{}, destModels interface{}) {
 	//exp := getModelExpire(destModels)
 	//setCache(destModels, cacheKey, exp)
 	//setCache(l, cacheKey+"list", exp)
-	reflectSliceModelCall(destModels, AfterQuery, orm)
+	reflectSliceModelCall(destModels, "AfterQuery", orm)
 
 }
 
