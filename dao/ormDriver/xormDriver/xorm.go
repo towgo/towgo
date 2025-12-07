@@ -118,6 +118,8 @@ func New(dsnConfigs []DsnConfig) {
 
 		dbEngine.SetMapper(names.GonicMapper{})
 		dbEngine.SetConnMaxLifetime(time.Hour)
+		dbEngine.SetConnMaxIdleTime(30 * time.Second) // 连接最大空闲时间（超时则关闭）
+		dbEngine.SetConnMaxLifetime(1 * time.Hour)    // 连接最大存活时间（超时则重建）
 
 		dbid++
 		db := &Db{}
