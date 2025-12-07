@@ -17,14 +17,13 @@ import (
 	"unicode"
 )
 
-type MyKey string
-
 const (
 	CRUD_FLAG_CREATE = "CRUD_FLAG_CREATE"
 	CRUD_FLAG_DELETE = "CRUD_FLAG_DELETE"
 	CRUD_FLAG_UPDATE = "CRUD_FLAG_UPDATE"
 	CRUD_FLAG_DETAIL = "CRUD_FLAG_DETAIL"
 	CRUD_FLAG_LIST   = "CRUD_FLAG_LIST"
+	IS_CRUD          = "IS_CRUD"
 )
 
 var crudMap map[string]*Crud = map[string]*Crud{}
@@ -99,6 +98,7 @@ func RegCreateConditionFixed(modelObject interface{}, f func(rpcConn JsonRpcConn
 	}
 	crud.CreateConditionFixed = append(crud.CreateConditionFixed, f)
 }
+
 func (c *Crud) create(rpcConn JsonRpcConnection) {
 	modelType := c.modelObject
 	model := reflect.New(reflect.TypeOf(modelType)).Interface()
@@ -112,6 +112,9 @@ func (c *Crud) create(rpcConn JsonRpcConnection) {
 
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
+
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
 
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
@@ -156,6 +159,9 @@ func (c *Crud) update(rpcConn JsonRpcConnection) {
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -189,6 +195,9 @@ func (c *Crud) delete(rpcConn JsonRpcConnection) {
 
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
+
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
 
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
@@ -264,6 +273,9 @@ func (c *Crud) detail(rpcConn JsonRpcConnection) {
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -318,6 +330,9 @@ func (c *Crud) list(rpcConn JsonRpcConnection) {
 
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
+
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
 
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
