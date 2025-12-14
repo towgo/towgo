@@ -299,6 +299,55 @@ func Renewal(guid string, addExpireSec ...int64) error {
 	return nil
 }
 
+// （原有代码：lockersLock、lockers、Locker 结构体等不变）
+
+// RenewalByKey 基于锁的Key（method）续期（更易用，入参为time.Duration）
+// 参数：
+//
+//	method: 锁的唯一Key（对应Lock/TryLock的method参数）
+//	duration: 续期时长（自动转为秒，<=0则沿用锁原有过期秒数）
+//
+// 返回：
+//
+//	err: 续期失败原因
+func RenewalByKey(method string, duration time.Duration) error {
+	// 1. 基础参数校验
+	if method == "" {
+		return errors.New("method (lock key) can not be null")
+	}
+
+	// 2. 将time.Duration转为秒（向下取整，如5*time.Minute → 300秒）
+	var renewSec int64
+	if duration > 0 {
+		renewSec = int64(duration.Seconds())
+	}
+	log.Printf("[dlocker] 准备基于Key续期: %s, 续期时长: %v → 秒数: %d", method, duration, renewSec)
+
+	// 3. 从本地缓存获取锁对象（加锁防并发）
+	lockersLock.Lock()
+	lockerAny, ok := lockers.Load(method)
+	lockersLock.Unlock()
+
+	// 4. 检查本地锁是否存在
+	if !ok {
+		err := errors.New("local lock not found by method: " + method)
+		log.Printf("[dlocker] %v", err)
+		return err
+	}
+	localLocker := lockerAny.(*Locker)
+
+	// 5. 检查锁的GUID是否有效
+	if localLocker.Guid == "" {
+		err := errors.New("lock guid is empty for method: " + method)
+		log.Printf("[dlocker] %v", err)
+		return err
+	}
+
+	// 6. 复用原有Renewal逻辑（传入guid和续期秒数）
+	// 若renewSec<=0，Renewal内部会沿用锁原有过期秒数
+	return Renewal(localLocker.Guid, renewSec)
+}
+
 // StopClean 停止自动清理协程（优雅退出）
 func StopClean() {
 	cleanCancel()
