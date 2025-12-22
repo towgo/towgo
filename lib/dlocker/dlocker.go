@@ -220,7 +220,7 @@ func UnLock(method string) error {
 		return err
 	}
 	if i == 0 {
-		return fmt.Errorf(" failed to unlock locker with method: %s update rows %d", locker.Method, i)
+		return fmt.Errorf("failed to unlock locker with method: %s update rows %d", locker.Method, i)
 	}
 
 	// 移除本地缓存的锁
