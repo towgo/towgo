@@ -199,7 +199,7 @@ func TryLock(method string, expireSec ...int64) (guid string, err error) {
 }
 
 // UnLock 解锁
-func UnLock(method string) error {
+func UnLock(guid, method string) error {
 	lockersLock.Lock()
 	lockerAny, ok := lockers.Load(method)
 	lockersLock.Unlock()
@@ -214,7 +214,7 @@ func UnLock(method string) error {
 	defer locker.Unlock()
 
 	// 删除数据库中的锁记录
-	i, err := basedboperat.Delete(locker, nil, "guid = ? and method = ?", locker.Guid, locker.Method)
+	i, err := basedboperat.Delete(locker, nil, "guid = ? and method = ?", guid, locker.Method)
 	if err != nil {
 
 		return err
