@@ -69,8 +69,9 @@ func autoClear() {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("[dlocker] 自动清理协程panic: %v，重启清理任务", r)
-				go autoClear() // panic后重启（可选）
+				if err, ok := r.(error); ok {
+					log.Println("err:", err)
+				}
 			}
 		}()
 
@@ -79,22 +80,17 @@ func autoClear() {
 		defer cleanTicker.Stop()
 
 		var l Locker
-		log.Printf("[dlocker] 自动清理协程启动，默认清理间隔10秒")
 		for {
 			select {
 			case <-cleanCtx.Done():
-				log.Printf("[dlocker] 自动清理协程退出")
+
 				return
 			case <-cleanTicker.C:
 				// 清理条件：created_at + expire_seconds < 当前时间戳（秒）
 				now := time.Now().Unix()
 				sql := "DELETE FROM " + l.TableName() + " WHERE (created_at + expire_seconds) < ?"
-				err := basedboperat.SqlExec(sql, now)
-				if err != nil {
-					log.Printf("[dlocker] 清理过期锁失败: %v", err)
-				} else {
-					log.Printf("[dlocker] 清理过期锁完成，当前时间戳: %d", now)
-				}
+				basedboperat.SqlExec(sql, now)
+
 			}
 		}
 	}()
@@ -148,15 +144,12 @@ func Lock(method string, checkRate int64, expireSec ...int64) (guid string, err 
 	defer locker.Unlock() // 最终解锁
 
 	// 5. 阻塞式争抢锁（直到成功）
-	log.Printf("[dlocker] 开始争抢锁: %s，过期秒数: %d", method, expire)
 	for {
 		_, err := basedboperat.Create(locker)
 		if err == nil {
-			log.Printf("[dlocker] 获取锁成功: %s, guid: %s", method, locker.Guid)
 			return locker.Guid, nil
 		}
 		// 争抢失败，休眠后重试
-		log.Printf("[dlocker] 争抢锁失败: %s，%v，%d毫秒后重试", method, err, checkRate)
 		time.Sleep(time.Millisecond * time.Duration(checkRate))
 	}
 }
@@ -199,10 +192,8 @@ func TryLock(method string, expireSec ...int64) (guid string, err error) {
 	// 4. 单次尝试创建锁
 	_, err = basedboperat.Create(locker)
 	if err != nil {
-		log.Printf("[dlocker] 尝试加锁失败: %s, %v", method, err)
 		return "", err
 	}
-	log.Printf("[dlocker] 尝试加锁成功: %s, guid: %s", method, locker.Guid)
 	return locker.Guid, nil
 }
 
@@ -214,7 +205,6 @@ func UnLock(method string) error {
 
 	if !ok {
 		err := errors.New("lock not found: " + method)
-		log.Printf("[dlocker] %v", err)
 		return err
 	}
 
@@ -225,13 +215,12 @@ func UnLock(method string) error {
 	// 删除数据库中的锁记录
 	_, err := basedboperat.Delete(locker, nil, "guid = ? and method = ?", locker.Guid, locker.Method)
 	if err != nil {
-		log.Printf("[dlocker] 解锁失败: %s, %v", method, err)
+
 		return err
 	}
 
 	// 移除本地缓存的锁
 	lockers.Delete(method)
-	log.Printf("[dlocker] 解锁成功: %s, guid: %s", method, locker.Guid)
 	return nil
 }
 
@@ -253,12 +242,12 @@ func Renewal(guid string, addExpireSec ...int64) error {
 	var locker Locker
 	err := basedboperat.Get(&locker, nil, "guid = ?", guid)
 	if err != nil {
-		log.Printf("[dlocker] 续期查询锁失败: %s, %v", guid, err)
+
 		return err
 	}
 	if locker.Method == "" {
 		err := errors.New("lock not found by guid: " + guid)
-		log.Printf("[dlocker] %v", err)
+
 		return err
 	}
 
@@ -274,7 +263,7 @@ func Renewal(guid string, addExpireSec ...int64) error {
 	lockersLock.Unlock()
 	if !ok {
 		err := errors.New("local lock not found: " + locker.Method)
-		log.Printf("[dlocker] %v", err)
+
 		return err
 	}
 	localLocker := lockerAny.(*Locker)
@@ -286,7 +275,7 @@ func Renewal(guid string, addExpireSec ...int64) error {
 	sql := "UPDATE " + locker.TableName() + " SET created_at = ?, expire_seconds = ? WHERE guid = ?"
 	err = basedboperat.SqlExec(sql, now, renewSec, guid)
 	if err != nil {
-		log.Printf("[dlocker] 续期执行失败: %s, %v", guid, err)
+
 		return err
 	}
 
@@ -294,8 +283,6 @@ func Renewal(guid string, addExpireSec ...int64) error {
 	localLocker.CreatedAt = now
 	localLocker.ExpireSeconds = renewSec
 
-	log.Printf("[dlocker] 锁续期成功: %s, guid: %s, 续期秒数: %d, 新过期时间戳: %d",
-		locker.Method, guid, renewSec, now+renewSec)
 	return nil
 }
 
@@ -321,8 +308,6 @@ func RenewalByKey(method string, duration time.Duration) error {
 	if duration > 0 {
 		renewSec = int64(duration.Seconds())
 	}
-	log.Printf("[dlocker] 准备基于Key续期: %s, 续期时长: %v → 秒数: %d", method, duration, renewSec)
-
 	// 3. 从本地缓存获取锁对象（加锁防并发）
 	lockersLock.Lock()
 	lockerAny, ok := lockers.Load(method)
@@ -331,7 +316,6 @@ func RenewalByKey(method string, duration time.Duration) error {
 	// 4. 检查本地锁是否存在
 	if !ok {
 		err := errors.New("local lock not found by method: " + method)
-		log.Printf("[dlocker] %v", err)
 		return err
 	}
 	localLocker := lockerAny.(*Locker)
@@ -339,7 +323,6 @@ func RenewalByKey(method string, duration time.Duration) error {
 	// 5. 检查锁的GUID是否有效
 	if localLocker.Guid == "" {
 		err := errors.New("lock guid is empty for method: " + method)
-		log.Printf("[dlocker] %v", err)
 		return err
 	}
 
@@ -354,5 +337,5 @@ func StopClean() {
 	if cleanTicker != nil {
 		cleanTicker.Stop()
 	}
-	log.Printf("[dlocker] 自动清理协程已停止")
+
 }
