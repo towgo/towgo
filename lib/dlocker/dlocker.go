@@ -8,6 +8,7 @@ package dlocker
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -213,10 +214,13 @@ func UnLock(method string) error {
 	defer locker.Unlock()
 
 	// 删除数据库中的锁记录
-	_, err := basedboperat.Delete(locker, nil, "guid = ? and method = ?", locker.Guid, locker.Method)
+	i, err := basedboperat.Delete(locker, nil, "guid = ? and method = ?", locker.Guid, locker.Method)
 	if err != nil {
 
 		return err
+	}
+	if i == 0 {
+		return fmt.Errorf("failed to unlock locker with method: %s update rows %d", locker.Method, i)
 	}
 
 	// 移除本地缓存的锁
