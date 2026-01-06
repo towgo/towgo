@@ -519,6 +519,22 @@ func (orm *Xorm) ListScan(l *List, model interface{}, destModels interface{}) {
 			}
 		}
 	}
+	if len(l.OrLike) > 0 {
+		for k, v := range l.OrLike {
+			if len(v) > 0 {
+				par := ""
+				for i := 0; i < len(v); i++ {
+					if par == "" {
+						par = par + k + " LIKE ?"
+					} else {
+						par = par + " OR " + k + " LIKE ?"
+					}
+				}
+				dbSessionLinkCount = dbSessionLinkCount.Or(par, v...)
+				dbSessionLink = dbSessionLink.Or(par, v...)
+			}
+		}
+	}
 
 	if len(l.Where) > 0 {
 		for _, v := range l.Where {
