@@ -153,12 +153,10 @@ func (i *IO) Read(p []byte) (n int, err error) {
 
 		//等待尾帧数据
 		if !bytes.Contains(readDataBuf, []byte{DATAEND}) {
-			log.Print("等待尾帧")
+			//log.Print("等待尾帧")
 			continue
 		}
 
-		//有尾帧数据,数据完整,可以解密
-		log.Print("有尾帧数据,数据完整,可以解密")
 		i.decode(readDataBuf)
 		return i.cutRead(p)
 	}

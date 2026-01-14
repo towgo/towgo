@@ -21,6 +21,7 @@ import (
 var API_HEAD = "towgocdn"
 
 type GatewayServer struct {
+	PrintRequestLogs                   bool
 	clusterToken                       string
 	edgeServerNodeHttpPingTimeoutLimit int64
 	sync.Mutex
@@ -163,13 +164,8 @@ func togocdn_http_edge_server_node_reg(rpcConn JsonRpcConnection) {
 			continue
 		}
 
-		switch node.Type {
-		case "restful":
-			for _, v := range node.EdgeServerNodeConfig.Methods {
-				gatewayServer.loadbalance.StoreHttpRestfulMethod(v, rpcConn, node.EdgeServerNodeConfig)
-			}
-		default:
-
+		for _, v := range node.EdgeServerNodeConfig.HttpPattern {
+			gatewayServer.loadbalance.StoreHttpRestfulMethod(v, rpcConn, node.EdgeServerNodeConfig)
 		}
 
 		//定时删除器
@@ -244,6 +240,7 @@ func ping(rpcConn JsonRpcConnection) {
 			timer.Reset(time.Second * time.Duration(gatewayServer.edgeServerNodeHttpPingTimeoutLimit))
 		}
 	}
+
 	if !finded {
 		rpcConn.GetRpcResponse().Error.Set(500, "token 不存在或已经失效")
 		rpcConn.Write()
@@ -267,6 +264,9 @@ func reg(rpcConn JsonRpcConnection) {
 }
 
 func (gs *GatewayServer) ProxyHttpHandller(w http.ResponseWriter, r *http.Request) {
+	if gs.PrintRequestLogs {
+		log.Print("new request : ", r.RemoteAddr, ":", r.URL.Path)
+	}
 	if r.Method == "OPTIONS" {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "*")
