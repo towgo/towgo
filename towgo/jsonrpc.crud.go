@@ -340,6 +340,11 @@ func (c *Crud) list(rpcConn JsonRpcConnection) {
 
 	session.ListScan(&list, model, models)
 
+	if list.Error != nil {
+		rpcConn.WriteError(500, list.Error.Error())
+		return
+	}
+
 	result := map[string]interface{}{}
 	result["count"] = list.Count
 	result["rows"] = models
