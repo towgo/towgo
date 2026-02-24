@@ -4,9 +4,9 @@ type List struct {
 	CacheExpireLimit int64
 	Count            int64 `json:"count"`
 	Error            error `json:"-"`
-	listOperatParams
+	ListOperatParams
 }
-type listOperatParams struct {
+type ListOperatParams struct {
 	Page    int                 `json:"page"`
 	Limit   int                 `json:"limit"`
 	Field   []string            `json:"field"`
