@@ -1,0 +1,28 @@
+{
+    "server": {
+        "serverport_tls":"4443",
+        "tls_key_path":"/Users/liangliangit/Downloads/mail.sauercompressors.cn_nginx/mail.sauercompressors.cn.key",
+        "tls_cert_path":"/Users/liangliangit/Downloads/mail.sauercompressors.cn_nginx/mail.sauercompressors.cn_bundle.crt",
+        "serverport":"9001",
+        "managerPort":"9000",
+        "mail_inform": true
+    },
+    "database": [
+        {
+            "DbType":"mysql1",
+            "IsMaster":true,
+            "Dsn":"rpacoe_app:;B,2KF;oAbKf7[!ophr}@tcp(localhost:3316)/rpa_coe_platform?charset=utf8mb4&sslMode=required&useSSL=true&requireSSL=true&verifyServerCertificate=false",
+            "sqlMaxIdleConns":100,
+            "sqlMaxOpenConns":100,
+            "sqlLogLevel":2
+        },
+        {
+            "DbType":"mysql2",
+            "IsMaster":true,
+            "Dsn":"rpacoe_app:;B,2KF;oAbKf7[!ophr}@tcp(localhost:3316)/rpa_coe_platform?charset=utf8mb4&sslMode=required&useSSL=true&requireSSL=true&verifyServerCertificate=false",
+            "sqlMaxIdleConns":100,
+            "sqlMaxOpenConns":100,
+            "sqlLogLevel":2
+        }
+    ]
+}

@@ -1,5 +1,0 @@
-{
-    "DbType":"mysql",
-	"Dsn":"root:12345678@tcp(localhost:3306)/demo?charset=utf8mb4",
-	"IsMaster":true
-}

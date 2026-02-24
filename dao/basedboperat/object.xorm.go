@@ -358,6 +358,10 @@ func (orm *Xorm) SqlQueryScan(destModel interface{}, sql interface{}, args ...in
 	return err
 }
 
+func (orm *Xorm) HasValue(key, value any) bool {
+	return orm.Value(key) == value
+}
+
 // 执行根据条件查询
 func (orm *Xorm) QueryScan(destModel interface{}, extra interface{}, condition interface{}, args ...interface{}) error {
 	var session *xorm.Session
@@ -512,6 +516,22 @@ func (orm *Xorm) ListScan(l *List, model interface{}, destModels interface{}) {
 				}
 				dbSessionLinkCount = dbSessionLinkCount.Where(par, v...)
 				dbSessionLink = dbSessionLink.Where(par, v...)
+			}
+		}
+	}
+	if len(l.OrLike) > 0 {
+		for k, v := range l.OrLike {
+			if len(v) > 0 {
+				par := ""
+				for i := 0; i < len(v); i++ {
+					if par == "" {
+						par = par + k + " LIKE ?"
+					} else {
+						par = par + " OR " + k + " LIKE ?"
+					}
+				}
+				dbSessionLinkCount = dbSessionLinkCount.Or(par, v...)
+				dbSessionLink = dbSessionLink.Or(par, v...)
 			}
 		}
 	}

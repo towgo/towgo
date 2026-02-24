@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+# https://goframe.org/docs/core/glog-config
+logger:
+  level : "all"
+  stdout: true
+
+# https://goframe.org/docs/core/gdb-config-file
+database:
+  default:
+#                root:Password1!@tcp(172.0.0.20:3306)/gh_digital_employee?charset=utf8mb4
+    link: "mysql:root:R7sj&2sk@tcp(127.0.0.1:33306)/gorm-demo"
+    debug: true
+# CLI tool, only in development environment.
+# https://goframe.org/docs/cli
+gfcli:
+  gen:
+    dao:
+      - link: "mysql:root:R7sj&2sk@tcp(127.0.0.1:33306)/gorm-demo"
+        descriptionTag: true
+
