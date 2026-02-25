@@ -1,0 +1,24 @@
+{
+  "server": {
+    "port": "10003"
+  },
+  "database": [
+    {
+      "DbType": "mysql",
+      "IsMaster": true,
+      "Dsn": "root:R7sj&2sk@tcp(localhost:33306)/db_test?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&readTimeout=10s&writeTimeout=10s&maxAllowedPacket=0&interpolateParams=true&multiStatements=false",
+      "sqlMaxIdleConns": 1,
+      "sqlMaxOpenConns": 1,
+      "sqlLogLevel": 2
+    }
+  ],
+  "togocdn": {
+    "client": {
+      "Priority":0,
+      "ModuleName":"Account Center",
+      "ServerUrls":[
+        "ws://172.0.0.19:4000/websocket/jsonrpc"
+      ]
+    }
+  }
+}

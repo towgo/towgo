@@ -9,11 +9,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gogf/gf/v2/net/ghttp"
 	"io"
 	"log"
 	"net/http"
 	"reflect"
-	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -265,13 +265,7 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 
 	rpcConn := NewHttpRpcConnection(w, r)
 
-	defer func(rpcConn JsonRpcConnection) {
-		r := recover()
-		if r != nil {
-			log.Printf("err=%v , stack=%s\n", r, debug.Stack())
-			rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
-		}
-	}(rpcConn)
+	defer DefaultExec(rpcConn)
 
 	if rpcConn == nil {
 		return
@@ -360,4 +354,36 @@ func parseQueryParams(r *http.Request, t reflect.Type) (interface{}, error) {
 	}
 
 	return structValue.Interface(), nil
+}
+
+// http 全局唯一入口 包装器 将http请求包装成jsonrpc请求
+func GhttpHandler(r *ghttp.Request) {
+	var (
+		w = r.Response.Writer
+	)
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	rpcConn := NewHttpRpcConnection(w, r.Request)
+
+	defer DefaultExec(rpcConn)
+
+	if rpcConn == nil {
+		return
+	}
+	rpcConn.isConnected = true
+
+	//运行拦截器
+	err := defaultJsonRpcInterceptor(rpcConn)
+	if err != nil {
+		rpcConn.isConnected = false
+		log.Print(err.Error())
+		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
+	}
+	//未被拦截 调用rpc方法
+	Exec(rpcConn)
+	rpcConn.isConnected = false //http是断链接  调用完RPC后默认连接关闭
 }

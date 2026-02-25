@@ -3,6 +3,7 @@ package basedboperat
 type DbContext interface {
 	WithValue(key, value any)
 	Value(key any) any
+	HasValue(key, value any) bool
 }
 
 // 通用数据库基本操作接口

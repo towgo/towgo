@@ -121,7 +121,6 @@ func New(dsnConfigs []DsnConfig) {
 		default:
 			err = errors.New("不支持的数据库类型")
 		}
-
 		if err != nil {
 			log.Print(err.Error())
 			continue
