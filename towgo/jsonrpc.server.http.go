@@ -279,7 +279,7 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 		rpcResponse := rpcConn.GetRpcResponse()
 		rpcConn.isConnected = false
 		if gerror.HasStack(err) {
-			var ge gerror.Error
+			var ge *gerror.Error
 			gerror.As(err, &ge)
 			rpcResponse.Error.Set(int64(ge.Code().Code()), ge.Error())
 		} else {
