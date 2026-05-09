@@ -28,6 +28,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/towgo/towgo/lib/system"
 )
@@ -142,7 +143,6 @@ func http_jsonrpc_wrapper(w http.ResponseWriter, r *http.Request) {
 	err := defaultJsonRpcInterceptor(conn)
 	if err != nil {
 		conn.isConnected = false
-		log.Print(err.Error())
 		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
 	}
 	Exec(conn)
@@ -286,7 +286,8 @@ func BindObject(method string, object interface{}) {
 
 		funcInfo, err := checkAndCreateFuncInfo(reflectValue.Method(i).Interface(), pkgPath, objName, methodName)
 		if err != nil {
-			panic(err)
+			fmt.Printf("%s [WARN] JsonRpc路由加载失败 函数格式检查不通过 [%s] [%s] : %+v\n", time.Now().Format("2006-01-02 15:04:05"), method, methodName, err.Error())
+			continue
 		}
 		uri := mergeBuildInNameToPattern(method, structName, methodName, true)
 		if funcInfo.Path != "" {

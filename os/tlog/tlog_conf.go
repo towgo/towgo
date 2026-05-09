@@ -1,4 +1,4 @@
-package log
+package tlog
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 )
 
 var ConfigNodeNameLogger = "logger"
-var DefaultLogPath = "glog"
+var DefaultLogPath = "logs"
 var glogConfig glog.Config
 var logger *glog.Logger = glog.New()
 var ctx context.Context = context.TODO()

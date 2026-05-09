@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"io"
 	"log"
@@ -275,8 +276,18 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 	//运行拦截器
 	err := defaultJsonRpcInterceptor(rpcConn)
 	if err != nil {
+		rpcResponse := rpcConn.GetRpcResponse()
 		rpcConn.isConnected = false
-		log.Print(err.Error())
+		if gerror.HasStack(err) {
+			var ge *gerror.Error
+			gerror.As(err, &ge)
+			rpcResponse.Error.Set(int64(ge.Code().Code()), ge.Error())
+		} else {
+			rpcResponse.Error.Set(500, err.Error())
+		}
+		rpcConn.isConnected = false
+		rpcConn.Write()
+
 		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
 	}
 	//未被拦截 调用rpc方法

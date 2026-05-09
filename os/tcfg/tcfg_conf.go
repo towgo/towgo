@@ -7,19 +7,15 @@ import (
 
 var conf *Config
 
-func init() {
-	config, err := New()
-	conf = config
-	if err != nil {
-		log.Printf(" %+v", err)
-		return
-	}
-	if err = conf.LoadConfig(); err != nil {
-		log.Printf("%+v", err)
-		return
-	}
-}
 func GetConfig() *Config {
+	if conf == nil {
+		config, err := New()
+		conf = config
+		if err != nil {
+			log.Printf("%+v", err)
+			return nil
+		}
+	}
 	return conf
 }
 
@@ -75,7 +71,6 @@ func (c *Config) Data() map[string]interface{} {
 // "x.y.z" for map item.
 // "x.0.y" for slice item.
 func (c *Config) Get(pattern string) (interface{}, error) {
-	log.Printf("C=%+v", c)
 	if c.adapter == nil {
 		return nil, terror.New("adapter is nil")
 	}

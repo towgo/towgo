@@ -7,14 +7,21 @@ import (
 	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"github.com/towgo/towgo/errors/terror"
 	"github.com/towgo/towgo/os/tcfg"
+	"github.com/towgo/towgo/os/tlog"
 )
 
 var dbCfg Config
 
-func init() {
-	err := tcfg.GetConfig().GetDataToStruct(ConfigNodeNameDatabase, &dbCfg)
+func InitDatabase() {
+	err := tcfg.GetConfig().LoadConfig()
 	if err != nil {
-		panic(terror.Wrap(err, "database config init error"))
+		tlog.Error(terror.Wrap(err, "database config init error"))
+		return
+	}
+	err = tcfg.GetConfig().GetDataToStruct(ConfigNodeNameDatabase, &dbCfg)
+	if err != nil {
+		tlog.Error(terror.Wrap(err, "database config init error"))
+		return
 	}
 	if dbCfg.Mode == "" {
 		dbCfg.Mode = "xorm"

@@ -10,12 +10,12 @@ package towgo
 import (
 	"bytes"
 	"context"
-	"github.com/towgo/towgo/dao/basedboperat"
+	"fmt"
 	"reflect"
+
+	"github.com/towgo/towgo/dao/basedboperat"
 	"unicode"
 )
-
-type MyKey string
 
 const (
 	CRUD_FLAG_CREATE = "CRUD_FLAG_CREATE"
@@ -23,25 +23,80 @@ const (
 	CRUD_FLAG_UPDATE = "CRUD_FLAG_UPDATE"
 	CRUD_FLAG_DETAIL = "CRUD_FLAG_DETAIL"
 	CRUD_FLAG_LIST   = "CRUD_FLAG_LIST"
+	IS_CRUD          = "IS_CRUD"
 )
 
+var crudMap map[string]*Crud = map[string]*Crud{}
+
 type Crud struct {
-	baseMethod   string
-	CreateApi    *Api
-	DeleteApi    *Api
-	UpdateApi    *Api
-	DetailApi    *Api
-	ListApi      *Api
-	modelObject  interface{}
-	modelObjects interface{}
+	baseMethod           string
+	CreateApi            *Api
+	DeleteApi            *Api
+	UpdateApi            *Api
+	DetailApi            *Api
+	ListApi              *Api
+	CreateConditionFixed []func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)
+	UpdateConditionFixed []func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)
+	DeleteConditionFixed []func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)
+	DetailConditionFixed []func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)
+	ListConditionFixed   []func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)
+	modelObject          interface{}
+	modelObjects         interface{}
 }
 
 func NewCRUDJsonrpcAPI(baseMethod string, modelObject, modelObjects interface{}) *Crud {
-	return &Crud{
+	crud := &Crud{
 		baseMethod:   baseMethod,
 		modelObject:  modelObject,
 		modelObjects: modelObjects,
 	}
+
+	crudMap[fmt.Sprint(modelObject)] = crud
+	return crud
+}
+
+func RegListConditionFixed(modelObject interface{}, f func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)) {
+
+	crud, ok := crudMap[fmt.Sprint(modelObject)]
+	if !ok {
+		return
+	}
+	crud.ListConditionFixed = append(crud.ListConditionFixed, f)
+}
+
+func RegDetailConditionFixed(modelObject interface{}, f func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)) {
+
+	crud, ok := crudMap[fmt.Sprint(modelObject)]
+	if !ok {
+		return
+	}
+	crud.DetailConditionFixed = append(crud.DetailConditionFixed, f)
+}
+
+func RegDeleteConditionFixed(modelObject interface{}, f func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)) {
+
+	crud, ok := crudMap[fmt.Sprint(modelObject)]
+	if !ok {
+		return
+	}
+	crud.DeleteConditionFixed = append(crud.DeleteConditionFixed, f)
+}
+
+func RegUpdateConditionFixed(modelObject interface{}, f func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)) {
+
+	crud, ok := crudMap[fmt.Sprint(modelObject)]
+	if !ok {
+		return
+	}
+	crud.UpdateConditionFixed = append(crud.UpdateConditionFixed, f)
+}
+func RegCreateConditionFixed(modelObject interface{}, f func(rpcConn JsonRpcConnection) ([]basedboperat.Condition, error)) {
+
+	crud, ok := crudMap[fmt.Sprint(modelObject)]
+	if !ok {
+		return
+	}
+	crud.CreateConditionFixed = append(crud.CreateConditionFixed, f)
 }
 
 func (c *Crud) create(rpcConn JsonRpcConnection) {
@@ -57,6 +112,9 @@ func (c *Crud) create(rpcConn JsonRpcConnection) {
 
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
+
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
 
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
@@ -101,6 +159,9 @@ func (c *Crud) update(rpcConn JsonRpcConnection) {
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -120,7 +181,11 @@ func (c *Crud) update(rpcConn JsonRpcConnection) {
 func (c *Crud) delete(rpcConn JsonRpcConnection) {
 	modelType := c.modelObject
 	model := reflect.New(reflect.TypeOf(modelType)).Interface()
-	rpcConn.ReadParams(&model)
+
+	var groupInt []int64
+	var groupString []string
+
+	rpcConn.ReadParams(&model, &groupInt, &groupString)
 
 	jsonrpcCtx := rpcConn.GetRpcRequest().Ctx
 	ctx := context.Background()
@@ -131,10 +196,57 @@ func (c *Crud) delete(rpcConn JsonRpcConnection) {
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
 		rpcConn.Write()
+		return
+	}
+
+	if len(groupInt) > 0 {
+		sql := basedboperat.ReflectModelPKJsonKey(model) + " in ("
+		var args []interface{}
+		for n, v := range groupInt {
+			if n == 0 {
+				sql = sql + "?"
+			} else {
+				sql = sql + ",?"
+			}
+			args = append(args, v)
+		}
+		sql = sql + ")"
+		count, err := session.Delete(model, nil, sql, args...)
+		if err != nil {
+			rpcConn.GetRpcResponse().Error.Set(500, err.Error())
+			rpcConn.Write()
+			return
+		}
+		rpcConn.WriteResult(count)
+		return
+	}
+
+	if len(groupString) > 0 {
+		sql := basedboperat.ReflectModelPKJsonKey(model) + " in ("
+		var args []interface{}
+		for n, v := range groupString {
+			if n == 0 {
+				sql = sql + "?"
+			} else {
+				sql = sql + ",?"
+			}
+			args = append(args, v)
+		}
+		sql = sql + ")"
+		count, err := session.Delete(model, nil, sql, args...)
+		if err != nil {
+			rpcConn.GetRpcResponse().Error.Set(500, err.Error())
+			rpcConn.Write()
+			return
+		}
+		rpcConn.WriteResult(count)
 		return
 	}
 
@@ -161,6 +273,9 @@ func (c *Crud) detail(rpcConn JsonRpcConnection) {
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -168,7 +283,28 @@ func (c *Crud) detail(rpcConn JsonRpcConnection) {
 		return
 	}
 
-	err = session.Get(model, nil, nil, nil)
+	var conditionStr string
+	var conditionArgs []interface{}
+	if len(c.DetailConditionFixed) > 0 {
+		for _, f := range c.DetailConditionFixed {
+			result, err := f(rpcConn)
+			if err != nil {
+				rpcConn.WriteError(500, err.Error())
+				return
+			}
+			for n, condition := range result {
+				if n == 0 {
+					conditionStr = condition.Field + " " + condition.Operator + " ?"
+				} else {
+					conditionStr = conditionStr + " and " + condition.Field + " " + condition.Operator + " ?"
+				}
+
+				conditionArgs = append(conditionArgs, condition.Value)
+			}
+		}
+	}
+
+	err = session.Get(model, nil, conditionStr, conditionArgs...)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
 		rpcConn.Write()
@@ -184,7 +320,7 @@ func (c *Crud) list(rpcConn JsonRpcConnection) {
 	models := reflect.New(reflect.TypeOf(modelTypes)).Interface()
 
 	var list basedboperat.List
-	rpcConn.ReadParams(&list)
+	rpcConn.ReadParams(&list, &model)
 
 	jsonrpcCtx := rpcConn.GetRpcRequest().Ctx
 	ctx := context.Background()
@@ -195,6 +331,9 @@ func (c *Crud) list(rpcConn JsonRpcConnection) {
 	var contextKey ContextKey = JSON_RPC_CONNECTION_CONTEXT_KEY
 	ctx = context.WithValue(ctx, contextKey, rpcConn)
 
+	var crudKey ContextKey = IS_CRUD
+	ctx = context.WithValue(ctx, crudKey, rpcConn)
+
 	session, err := basedboperat.WithContext(ctx)
 	if err != nil {
 		rpcConn.GetRpcResponse().Error.Set(500, err.Error())
@@ -202,7 +341,23 @@ func (c *Crud) list(rpcConn JsonRpcConnection) {
 		return
 	}
 
+	if len(c.ListConditionFixed) > 0 {
+		for _, f := range c.ListConditionFixed {
+			conditions, err := f(rpcConn)
+			if err != nil {
+				rpcConn.WriteError(500, err.Error())
+				return
+			}
+			list.Where = append(list.Where, conditions...)
+		}
+	}
+
 	session.ListScan(&list, model, models)
+
+	if list.Error != nil {
+		rpcConn.WriteError(500, list.Error.Error())
+		return
+	}
 
 	result := map[string]interface{}{}
 	result["count"] = list.Count

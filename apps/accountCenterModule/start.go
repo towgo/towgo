@@ -7,7 +7,6 @@ import (
 	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
 	"github.com/towgo/towgo/module/accountcenter"
 	"github.com/towgo/towgo/os/tcfg"
-	"github.com/towgo/towgo/towgo"
 	"log"
 	"net/http"
 	"os"
@@ -34,7 +33,10 @@ type User struct {
 
 // 初始化
 func init() {
-
+	err := conf.LoadConfig()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	//初始化xorm数据库驱动
 	var xormDbConfig []xormDriver.DsnConfig
 	conf.GetDataToStruct("database", &xormDbConfig)
@@ -45,7 +47,7 @@ func init() {
 	gormDriver.New(gormDbConfig)
 
 	//设定默认orm引擎
-	err := basedboperat.SetOrmEngine("xorm")
+	err = basedboperat.SetOrmEngine("xorm")
 	if err != nil {
 		log.Print(err.Error())
 	}
@@ -130,7 +132,7 @@ func httpServer() {
 	frontServer := www.WebServer{}
 	frontServer.Wwwroot = "wwwroot"
 	frontServer.Index = []string{"index.html"}
-	towgo.HttpHandller()
+	//towgo.HttpHandller()
 	http.HandleFunc("/websocket/jsonrpc", jsonrpc.DefaultWebSocketServer.WebsocketServiceHandller.ServeHTTP)
 	http.HandleFunc("/", frontServer.WebServerHandller)
 	jsonrpc.MethodToHttpInterface(http.DefaultServeMux)

@@ -18,7 +18,10 @@ import (
 	"github.com/towgo/towgo/lib/www"
 )
 
+var API_HEAD = "towgocdn"
+
 type GatewayServer struct {
+	PrintRequestLogs                   bool
 	clusterToken                       string
 	edgeServerNodeHttpPingTimeoutLimit int64
 	sync.Mutex
@@ -33,14 +36,19 @@ type GatewayServer struct {
 type GatewayEdgeServerNode struct {
 	Guid                 string `json:"guid"  xorm:"index unique"`
 	RemoteAddr           string `json:"remote_addr"`
+	Conn                 JsonRpcConnection
 	EdgeServerNodeConfig `xorm:"extends"`
 }
 
+func SetAPIHead(head string) {
+	API_HEAD = head
+}
+
 func InitServerApi() {
-	SetFunc("/towgocdn/edgeServerNode/reg", reg)
-	SetFunc("/towgocdn/getEdgeServerNodeInfo", getEdgeServerNodeInfo)
-	SetFunc("/towgocdn/edgeServerNode/ping", ping)
-	SetFunc("/towgocdn/edgeServerNode/method/jsonrpcroute/list", edgeServerNodeMethodJsonrpcRouteList)
+	SetFunc("/"+API_HEAD+"/edgeServerNode/reg", reg)
+	SetFunc("/"+API_HEAD+"/getEdgeServerNodeInfo", getEdgeServerNodeInfo)
+	SetFunc("/"+API_HEAD+"/edgeServerNode/ping", ping)
+	SetFunc("/"+API_HEAD+"/edgeServerNode/method/jsonrpcroute/list", edgeServerNodeMethodJsonrpcRouteList)
 }
 
 var gateWayServers []*GatewayServer
@@ -101,6 +109,35 @@ func CallEdgeServerNode(method, token string, requestParams any, responseParams 
 	return
 }
 
+func CallEdgeServerNodeByClientID(clientID, method, token string, requestParams any, responseParams any) (err error) {
+	err = errors.New("RPC调用失败,远程网关无法连接")
+	request := NewJsonrpcrequest()
+	request.Method = method
+	request.Params = requestParams
+	request.Session = token
+	l := len(gateWayServers)
+	if l == 0 {
+		return
+	}
+
+	nodeInterface, ok := gateWayServers[rand.Intn(l)].edgeServerNodeWebsocketMap.Load(clientID)
+	if !ok {
+		return errors.New("client id 不存在")
+	}
+	node := nodeInterface.(JsonRpcConnection)
+	node.Call(request, func(jrc JsonRpcConnection) {
+		resp := jrc.GetRpcResponse()
+		if resp.Error.Code != 200 {
+			err = errors.New(resp.Error.Message)
+			return
+		}
+		err = jrc.ReadResult(responseParams)
+	})
+
+	request.Await()
+	return
+}
+
 func (gs *GatewayServer) SetLoadAlgorithm(loadType int) {
 	gs.Lock()
 	defer gs.Unlock()
@@ -127,13 +164,8 @@ func togocdn_http_edge_server_node_reg(rpcConn JsonRpcConnection) {
 			continue
 		}
 
-		switch node.Type {
-		case "restful":
-			for _, v := range node.EdgeServerNodeConfig.Methods {
-				gatewayServer.loadbalance.StoreHttpRestfulMethod(v, rpcConn, node.EdgeServerNodeConfig)
-			}
-		default:
-
+		for _, v := range node.EdgeServerNodeConfig.HttpPattern {
+			gatewayServer.loadbalance.StoreHttpRestfulMethod(v, rpcConn, node.EdgeServerNodeConfig)
 		}
 
 		//定时删除器
@@ -171,19 +203,13 @@ func togocdn_websocket_edge_server_node_reg(rpcConn JsonRpcConnection) {
 
 	node.Guid = rpcConn.GUID()
 	node.RemoteAddr = rpcConn.GetRemoteAddr()
-
+	node.Conn = rpcConn
 	for _, gatewayServer := range gateWayServers {
 		if node.EdgeServerNodeConfig.ClusterToken != gatewayServer.clusterToken {
 			log.Print("集群token错误 无法注册")
 			continue
 		}
 		gatewayServer.edgeServerNodeWebsocketMap.Store(rpcConn.GUID(), node)
-	}
-
-	for _, gatewayServer := range gateWayServers {
-		if node.EdgeServerNodeConfig.ClusterToken != gatewayServer.clusterToken {
-			continue
-		}
 		gatewayServer.loadbalance.StoreJsonrpcKeepaliveMethods(node.EdgeServerNodeConfig.Methods, rpcConn, node.EdgeServerNodeConfig.Priority)
 	}
 
@@ -214,6 +240,7 @@ func ping(rpcConn JsonRpcConnection) {
 			timer.Reset(time.Second * time.Duration(gatewayServer.edgeServerNodeHttpPingTimeoutLimit))
 		}
 	}
+
 	if !finded {
 		rpcConn.GetRpcResponse().Error.Set(500, "token 不存在或已经失效")
 		rpcConn.Write()
@@ -237,6 +264,9 @@ func reg(rpcConn JsonRpcConnection) {
 }
 
 func (gs *GatewayServer) ProxyHttpHandller(w http.ResponseWriter, r *http.Request) {
+	if gs.PrintRequestLogs {
+		log.Print("new request : ", r.RemoteAddr, ":", r.URL.Path)
+	}
 	if r.Method == "OPTIONS" {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "*")

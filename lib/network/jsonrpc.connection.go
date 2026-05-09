@@ -1,11 +1,15 @@
+/*
+代码暂未实现功能     开发中...
+*/
+
 package network
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
-	"net"
 	"sync"
 	"time"
 
@@ -17,33 +21,34 @@ const (
 	END_DATA = '\n'
 )
 
-type Connection struct {
+type ConnectionPipe struct {
 	callTimeoutInterval    int64
 	receiveTimeoutInterval int64
 	ioLocker               sync.Mutex
 	rpcResponses           sync.Map
-	conn                   net.Conn
+	baseConn               io.ReadWriteCloser
+	rpcConn                towgo.JsonRpcConnection
 	maxBufLen              int64
 	dataBuf                []byte
-	Mode                   string
 }
 
-// 包装器包装网络连接
-func NewWrapperConnection(conn net.Conn) *Connection {
-	newConn := &Connection{
-		conn:                   conn,
+// 新建jsonrcp管道  实现数据透传
+func NewJsonrpcPipe(baseConn io.ReadWriteCloser, rpcConn towgo.JsonRpcConnection) *ConnectionPipe {
+	newConn := &ConnectionPipe{
+		baseConn:               baseConn,
+		rpcConn:                rpcConn,
 		callTimeoutInterval:    60,
 		receiveTimeoutInterval: 10,
 	}
-	go newConn.receiveHandller()
+	go newConn.baseConnHandller()
 	return newConn
 }
 
-// 开始监听读取线路
-func (c *Connection) receiveHandller() {
+// 开始监听原始线路
+func (c *ConnectionPipe) baseConnHandller() {
 	for {
 		buf := make([]byte, 1024)
-		n, err := c.conn.Read(buf)
+		n, err := c.baseConn.Read(buf)
 		if err != nil {
 			log.Print(err.Error())
 			return
@@ -65,7 +70,7 @@ func (c *Connection) receiveHandller() {
 				log.Print(err.Error())
 			} else {
 				c.rpcResponses.Store(resp.Id, resp)
-				go func(c *Connection, id string) {
+				go func(c *ConnectionPipe, id string) {
 					time.Sleep(time.Second * time.Duration(c.receiveTimeoutInterval))
 					c.rpcResponses.Delete(id)
 				}(c, resp.Id)
@@ -77,7 +82,7 @@ func (c *Connection) receiveHandller() {
 }
 
 // 一次推送
-func (c *Connection) Push(method string, params any) error {
+func (c *ConnectionPipe) Push(method string, params any) error {
 	//组装数据
 	request := EncodeConnectionRPCData(method, params)
 	request.Id = system.GetGUID().Hex()
@@ -98,7 +103,7 @@ func (c *Connection) Push(method string, params any) error {
 }
 
 // 一次请求
-func (c *Connection) Call(method string, params any, destResult any) error {
+func (c *ConnectionPipe) Call(method string, params any, destResult any) error {
 	//组装数据
 	request := EncodeConnectionRPCData(method, params)
 	request.Id = system.GetGUID().Hex()
@@ -126,7 +131,7 @@ func (c *Connection) Call(method string, params any, destResult any) error {
 	return err
 }
 
-func (c *Connection) receiveJsonrpc(requestID string) (*towgo.Jsonrpcresponse, error) {
+func (c *ConnectionPipe) receiveJsonrpc(requestID string) (*towgo.Jsonrpcresponse, error) {
 	timer := time.NewTimer(time.Second * time.Duration(c.callTimeoutInterval))
 	for {
 		select {
@@ -140,15 +145,6 @@ func (c *Connection) receiveJsonrpc(requestID string) (*towgo.Jsonrpcresponse, e
 			continue
 		}
 	}
-}
-
-// 透传
-func (c *Connection) TransparentTransmission(connection *Connection) error {
-	if c == connection {
-		return errors.New("无法自己和自己进行透传")
-	}
-
-	return nil
 }
 
 func EncodeConnectionRPCData(method string, params any) *towgo.Jsonrpcrequest {
