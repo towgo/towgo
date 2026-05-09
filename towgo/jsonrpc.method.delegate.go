@@ -591,7 +591,7 @@ func mergeDefaultStructValue(fields []gstructs.Field, data map[string]interface{
 	// provide non strict routing
 	tagFields, err := gstructs.TagFields(pointer, []string{gtag.DefaultShort, gtag.Default})
 	if err != nil {
-		return err
+		return gerror.Wrap(err, `tag field "default" failed`)
 	}
 	if len(tagFields) > 0 {
 		for _, field := range tagFields {
