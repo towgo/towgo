@@ -11,7 +11,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"runtime/debug"
 	"strconv"
@@ -45,7 +44,7 @@ type WebSocketRpcConnection struct {
 	guid                   string
 	isConnected            bool
 	messageChan            chan string
-	CallTimeOut            int64 //客户端请求后，等待响应的超时时间
+	CallTimeOut            int64
 	requestBody            string
 	request                *Jsonrpcrequest
 	response               *Jsonrpcresponse
@@ -55,6 +54,10 @@ type WebSocketRpcConnection struct {
 	requestCallBackCancels *sync.Map
 	healCheckCancel        context.CancelFunc
 	pingTimeOut            int64
+	ctx                    context.Context
+	nextFunc               func()
+	err                    error
+	result                 interface{}
 	*sync.Map
 }
 
@@ -201,12 +204,7 @@ func (w *WebSocketServer) preHandller(ws *websocket.Conn) {
 					}
 
 				}(tmpRpcConn)
-				err := defaultJsonRpcInterceptor(tmpRpcConn)
-				if err != nil {
-					log.Print(fmt.Errorf("请求被拦截:%w", err))
-					return //拦截后 rpc响应由拦截器处理，  不需要再次响应
-				}
-				Exec(tmpRpcConn)
+				execHandler(tmpRpcConn)
 
 				//结束ctx
 				tmpRpcConn.request.Done()
@@ -371,8 +369,16 @@ func (w *WebSocketRpcConnection) ReadResult(destResult ...interface{}) error {
 	return nil
 }
 
+func (w *WebSocketRpcConnection) SetResult(result interface{}) {
+	w.result = result
+}
+
+func (w *WebSocketRpcConnection) GetResult() interface{} {
+	return w.result
+}
+
 func (w *WebSocketRpcConnection) WriteResult(any interface{}) {
-	w.response.Result = any
+	w.result = any
 	w.Write()
 }
 
@@ -382,6 +388,14 @@ func (w *WebSocketRpcConnection) Write() {
 	w.response.Timestampin = w.request.Timestampin
 	time := time.Now().UnixNano() / 1e6
 	w.response.Timestampout = strconv.FormatInt(time, 10)
+
+	// 设置 result 和 error
+	if w.err != nil {
+		w.response.Error.Set(500, w.err.Error())
+	} else if w.result != nil {
+		w.response.Result = w.result
+	}
+
 	mjson, _ := json.Marshal(w.response)
 	if w.request.Isencryption {
 		if isencryption {
@@ -547,4 +561,33 @@ func (wsc *WebSocketRpcConnection) Close() {
 		close(wsc.messageChan)
 		wsc.wsConn.Close()
 	}
+}
+
+func (wsc *WebSocketRpcConnection) Context() context.Context {
+	if wsc.ctx != nil {
+		return wsc.ctx
+	}
+	return context.Background()
+}
+
+func (wsc *WebSocketRpcConnection) WithContext(ctx context.Context) {
+	wsc.ctx = ctx
+}
+
+func (wsc *WebSocketRpcConnection) GetError() error {
+	return wsc.err
+}
+
+func (wsc *WebSocketRpcConnection) WithError(err error) {
+	wsc.err = err
+}
+
+func (wsc *WebSocketRpcConnection) Next() {
+	if wsc.nextFunc != nil {
+		wsc.nextFunc()
+	}
+}
+
+func (wsc *WebSocketRpcConnection) SetNextFunc(fn func()) {
+	wsc.nextFunc = fn
 }

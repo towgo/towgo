@@ -3,7 +3,7 @@ package towgo
 type Errors interface {
 	Set(int64, string)
 	NewChild(int64, string) *Error
-	GetCode() int64
+	Gegcode() int64
 	Error() string
 	AppendChild(Errors)
 }
@@ -46,7 +46,7 @@ func (e *Error) AppendChild(es Errors) {
 
 }
 
-func (e *Error) GetCode() int64 {
+func (e *Error) Gegcode() int64 {
 	return e.Code
 }
 

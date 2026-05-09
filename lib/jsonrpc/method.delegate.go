@@ -6,8 +6,8 @@ version 2.1
 package jsonrpc
 
 import (
-	"github.com/towgo/towgo/errors/tcode"
-	"github.com/towgo/towgo/errors/terror"
+	"github.com/gogf/gf/v2/errors/gcode"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"log"
 	"net/http"
 	"strings"
@@ -27,10 +27,10 @@ var AfterExec func(rpcConn JsonRpcConnection)
 var DefaultExec func(rpcConn JsonRpcConnection) = func(rpcConn JsonRpcConnection) {
 	if err := recover(); err != nil {
 		if exception := recover(); exception != nil {
-			if v, ok := exception.(error); ok && terror.HasStack(v) {
+			if v, ok := exception.(error); ok && gerror.HasStack(v) {
 				log.Printf("err %+v \n", v)
 			} else {
-				log.Printf("recover exception %+v\n", terror.NewCodef(tcode.CodeInternalPanic, "%+v", exception))
+				log.Printf("recover exception %+v\n", gerror.NewCodef(gcode.CodeInternalPanic, "%+v", exception))
 			}
 		}
 		rpcConn.WriteError(500, DEFAULT_ERROR_MSG)

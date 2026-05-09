@@ -21,8 +21,6 @@ import (
 	"github.com/gogf/gf/v2/util/gtag"
 	"github.com/gogf/gf/v2/util/gutil"
 	"github.com/gogf/gf/v2/util/gvalid"
-	"github.com/towgo/towgo/errors/tcode"
-	"github.com/towgo/towgo/errors/terror"
 	"log"
 	"net/http"
 	"reflect"
@@ -49,10 +47,10 @@ var BeforExec func(rpcConn JsonRpcConnection)
 var AfterExec func(rpcConn JsonRpcConnection)
 var DefaultExec func(rpcConn JsonRpcConnection) = func(rpcConn JsonRpcConnection) {
 	if exception := recover(); exception != nil {
-		if v, ok := exception.(error); ok && terror.HasStack(v) {
+		if v, ok := exception.(error); ok && gerror.HasStack(v) {
 			log.Printf("err %+v \n", v)
 		} else {
-			log.Printf("recover exception %+v\n", terror.NewCodef(tcode.CodeInternalPanic, "%+v", exception))
+			log.Printf("recover exception %+v\n", gerror.NewCodef(gcode.CodeInternalPanic, "%+v", exception))
 		}
 		rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 	}
@@ -77,7 +75,7 @@ func (a *Api) Exec(rpcConn JsonRpcConnection) {
 	//运行拦截器
 	err := a.interceptor(rpcConn)
 	if err != nil {
-		rpcConn.WriteError(500, err.Error())
+		rpcConn.WithError(err)
 		return
 	}
 
@@ -450,7 +448,7 @@ func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(co
 			ok          bool
 			err         error
 			inputValues = []reflect.Value{
-				reflect.ValueOf(conn.GetRpcRequest().ctx),
+				reflect.ValueOf(conn.Context()),
 			}
 		)
 		if funcInfo.Type.NumIn() == 2 {
@@ -464,7 +462,7 @@ func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(co
 				err = doParse(conn, fields, inputObject.Addr().Interface(), parseTypeRequest)
 			}
 			if err != nil {
-				conn.WriteError(500, err.Error())
+				conn.WithError(err)
 				return
 			}
 			inputValues = append(inputValues, inputObject)
@@ -475,7 +473,7 @@ func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(co
 		case 1:
 			if !results[0].IsNil() {
 				if err, ok = results[0].Interface().(error); ok {
-					conn.WriteError(500, err.Error())
+					conn.WithError(err)
 					return
 				}
 			}
@@ -483,12 +481,12 @@ func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(co
 		case 2:
 			if !results[1].IsNil() {
 				if err, ok = results[1].Interface().(error); ok {
-					conn.WriteError(500, err.Error())
+					conn.WithError(err)
 					return
 				}
 			}
 			result := results[0].Interface()
-			conn.WriteResult(result)
+			conn.SetResult(result)
 			return
 		}
 	}
@@ -545,7 +543,7 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 			Bail().
 			Data(pointer).
 			Assoc(data).
-			Run(conn.GetRpcRequest().ctx); err != nil {
+			Run(conn.Context()); err != nil {
 			return err
 		}
 
@@ -570,7 +568,7 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 				Bail().
 				Data(reflectVal2.Index(i)).
 				Assoc(j.Get(gconv.String(i)).Map()).
-				Run(conn.GetRpcRequest().ctx); err != nil {
+				Run(conn.Context()); err != nil {
 				return err
 			}
 		}

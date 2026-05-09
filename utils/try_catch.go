@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"github.com/towgo/towgo/errors/tcode"
-	"github.com/towgo/towgo/errors/terror"
+	"github.com/gogf/gf/v2/errors/gcode"
+	"github.com/gogf/gf/v2/errors/gerror"
 )
 
 // Throw throws out an exception, which can be caught be TryCatch or recover.
@@ -18,10 +18,10 @@ func Try(try func()) (err error) {
 	}
 	defer func() {
 		if exception := recover(); exception != nil {
-			if v, ok := exception.(error); ok && terror.HasStack(v) {
+			if v, ok := exception.(error); ok && gerror.HasStack(v) {
 				err = v
 			} else {
-				err = terror.NewCodef(tcode.CodeInternalPanic, "%+v", exception)
+				err = gerror.NewCodef(gcode.CodeInternalPanic, "%+v", exception)
 			}
 		}
 	}()

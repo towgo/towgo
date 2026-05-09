@@ -1,6 +1,7 @@
 package towgo
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"sync"
@@ -13,6 +14,10 @@ type LocalRpcConnection struct {
 	guid        string
 	rpcRequest  *Jsonrpcrequest
 	rpcResponse *Jsonrpcresponse
+	ctx         context.Context
+	nextFunc    func()
+	err         error
+	result      interface{}
 	sync.Map
 }
 
@@ -64,16 +69,21 @@ func (n *LocalRpcConnection) ReadResult(destResult ...interface{}) error {
 	return nil
 }
 
+func (n *LocalRpcConnection) SetResult(result interface{}) {
+	n.result = result
+}
+
+func (n *LocalRpcConnection) GetResult() interface{} {
+	return n.result
+}
+
 // 将结果写入（最终会组装成一个响应对象发送给对端）
 func (n *LocalRpcConnection) WriteResult(any interface{}) {
-	if n.rpcResponse == nil {
-		n.rpcResponse = NewJsonrpcresponse()
-	}
-	n.rpcResponse.Result = any
+	n.result = any
 	n.Write()
 }
 
-// 写入连接器内置的响应对象
+// 写入响应
 func (n *LocalRpcConnection) Write() {
 	if n.rpcResponse == nil {
 		n.rpcResponse = NewJsonrpcresponse()
@@ -84,11 +94,17 @@ func (n *LocalRpcConnection) Write() {
 	time := time.Now().UnixNano() / 1e6
 	n.rpcResponse.Timestampout = strconv.FormatInt(time, 10)
 
+	// 设置 result 和 error
+	if n.err != nil {
+		n.rpcResponse.Error.Set(500, n.err.Error())
+	} else if n.result != nil {
+		n.rpcResponse.Result = n.result
+	}
 }
 
 // 直接将传入的响应对象写入
 func (n *LocalRpcConnection) WriteResponse(Jsonrpcresponse) {
-
+	// 空实现
 }
 
 // 获取连接器请求对象
@@ -157,5 +173,33 @@ func (c *LocalRpcConnection) EnableHealthCheck() {
 }
 
 func (c *LocalRpcConnection) DisableHealthCheck() {
+}
 
+func (c *LocalRpcConnection) Context() context.Context {
+	if c.ctx != nil {
+		return c.ctx
+	}
+	return context.Background()
+}
+
+func (c *LocalRpcConnection) WithContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
+func (c *LocalRpcConnection) GetError() error {
+	return c.err
+}
+
+func (c *LocalRpcConnection) WithError(err error) {
+	c.err = err
+}
+
+func (c *LocalRpcConnection) Next() {
+	if c.nextFunc != nil {
+		c.nextFunc()
+	}
+}
+
+func (c *LocalRpcConnection) SetNextFunc(fn func()) {
+	c.nextFunc = fn
 }

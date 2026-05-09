@@ -1,6 +1,7 @@
 package towgo
 
 import (
+	"context"
 	"sync"
 
 	"github.com/towgo/towgo/lib/system"
@@ -10,6 +11,10 @@ type NilRpcConnection struct {
 	guid        string
 	rpcRequest  *Jsonrpcrequest
 	rpcResponse *Jsonrpcresponse
+	ctx         context.Context
+	nextFunc    func()
+	err         error
+	result      interface{}
 	sync.Map
 }
 
@@ -46,19 +51,27 @@ func (n *NilRpcConnection) ReadResult(destResult ...interface{}) error {
 	return nil
 }
 
-// 将结果写入（最终会组装成一个响应对象发送给对端）
-func (n *NilRpcConnection) WriteResult(any interface{}) {
-
+func (n *NilRpcConnection) SetResult(result interface{}) {
+	n.result = result
 }
 
-// 写入连接器内置的响应对象
-func (n *NilRpcConnection) Write() {
+func (n *NilRpcConnection) GetResult() interface{} {
+	return n.result
+}
 
+// 将结果写入（最终会组装成一个响应对象发送给对端）
+func (n *NilRpcConnection) WriteResult(any interface{}) {
+	n.result = any
+}
+
+// 写入响应
+func (n *NilRpcConnection) Write() {
+	// 空实现
 }
 
 // 直接将传入的响应对象写入
 func (n *NilRpcConnection) WriteResponse(Jsonrpcresponse) {
-
+	// 空实现
 }
 
 // 获取连接器请求对象
@@ -114,4 +127,33 @@ func (c *NilRpcConnection) EnableHealthCheck() {
 }
 
 func (c *NilRpcConnection) DisableHealthCheck() {
+}
+
+func (c *NilRpcConnection) Context() context.Context {
+	if c.ctx != nil {
+		return c.ctx
+	}
+	return context.Background()
+}
+
+func (c *NilRpcConnection) WithContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
+func (c *NilRpcConnection) GetError() error {
+	return c.err
+}
+
+func (c *NilRpcConnection) WithError(err error) {
+	c.err = err
+}
+
+func (c *NilRpcConnection) Next() {
+	if c.nextFunc != nil {
+		c.nextFunc()
+	}
+}
+
+func (c *NilRpcConnection) SetNextFunc(fn func()) {
+	c.nextFunc = fn
 }

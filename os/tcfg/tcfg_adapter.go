@@ -3,8 +3,8 @@ package tcfg
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/towgo/towgo/errors/tcode"
-	"github.com/towgo/towgo/errors/terror"
+	"github.com/gogf/gf/v2/errors/gcode"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/towgo/towgo/os/tfile"
 	"os"
 	"path/filepath"
@@ -52,13 +52,13 @@ func (a *Adapter) verify(path ...string) error {
 	}
 	_, err := os.Stat(verifyPath)
 	if os.IsNotExist(err) {
-		return terror.NewCode(tcode.CodeBusinessValidationFailed, "Config file does not exist : "+verifyPath)
+		return gerror.NewCode(gcode.CodeBusinessValidationFailed, "Config file does not exist : "+verifyPath)
 	}
 	if os.IsPermission(err) {
-		return terror.NewCode(tcode.CodeBusinessValidationFailed, "No permission to read configuration files :"+verifyPath)
+		return gerror.NewCode(gcode.CodeBusinessValidationFailed, "No permission to read configuration files :"+verifyPath)
 	}
 	if err != nil {
-		return terror.NewCode(tcode.CodeBusinessValidationFailed, "An error occurred while verifying the configuration file: "+verifyPath)
+		return gerror.NewCode(gcode.CodeBusinessValidationFailed, "An error occurred while verifying the configuration file: "+verifyPath)
 
 	}
 
@@ -83,12 +83,12 @@ func (a *Adapter) LoadConfig() error {
 	filePath := a.GetConfigPath()
 	dataType := tfile.ExtName(filePath)
 	if dataType != "json" {
-		return terror.NewCode(tcode.CodeBusinessValidationFailed, "invalid config file format: "+filePath)
+		return gerror.NewCode(gcode.CodeBusinessValidationFailed, "invalid config file format: "+filePath)
 	}
 	content := tfile.GetContents(filePath)
 	decoder := json.NewDecoder(bytes.NewReader([]byte(content)))
 	if err := decoder.Decode(&out); err != nil {
-		return terror.NewCodef(tcode.CodeBusinessValidationFailed, "json decoding failed for content: %s, error: %+v", content, err)
+		return gerror.NewCodef(gcode.CodeBusinessValidationFailed, "json decoding failed for content: %s, error: %+v", content, err)
 
 	}
 	a.jsonData = out
@@ -133,16 +133,16 @@ func (a *Adapter) Get(pattern string) (interface{}, error) {
 			idx, err := strconv.Atoi(part)
 			if err != nil {
 
-				return def, terror.NewCodef(tcode.CodeBusinessValidationFailed, "invalid index format err = %+v", err)
+				return def, gerror.NewCodef(gcode.CodeBusinessValidationFailed, "invalid index format err = %+v", err)
 			}
 			if idx < 0 || idx >= len(val) {
 
-				return def, terror.NewCodef(tcode.CodeBusinessValidationFailed, "index out of range: %d", idx)
+				return def, gerror.NewCodef(gcode.CodeBusinessValidationFailed, "index out of range: %d", idx)
 			}
 			current = val[idx]
 		default:
 			// 不支持的类型
-			return def, terror.NewCodef(tcode.CodeBusinessValidationFailed, "unsupported data type: %T", val)
+			return def, gerror.NewCodef(gcode.CodeBusinessValidationFailed, "unsupported data type: %T", val)
 		}
 	}
 
@@ -165,7 +165,7 @@ func (a *Adapter) GetDataToStruct(key string, pointstr interface{}) error {
 	jsonData, _ := json.Marshal(data)
 	err = json.Unmarshal(jsonData, pointstr)
 	if err != nil {
-		return terror.NewCodef(tcode.CodeBusinessValidationFailed, "json Unmarshal err %+v", err)
+		return gerror.NewCodef(gcode.CodeBusinessValidationFailed, "json Unmarshal err %+v", err)
 	}
 	return nil
 }

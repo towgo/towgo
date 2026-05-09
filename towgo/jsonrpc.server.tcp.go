@@ -54,6 +54,10 @@ type TcpRpcConnection struct {
 	bodyStr                string
 	paramsBytes            []byte
 	resultBytes            []byte
+	ctx                    context.Context
+	nextFunc               func()
+	err                    error
+	result                 interface{}
 	sync.Map
 }
 
@@ -69,11 +73,6 @@ func TCPServiceHandller(tcpConn *TcpConn, data string, rpcConn *TcpRpcConnection
 		}
 	}(rpcConn)
 	rpcConn.AnalysisByString(data)
-	//运行拦截器
-	err := defaultJsonRpcInterceptor(rpcConn)
-	if err != nil {
-		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
-	}
 	request := rpcConn.GetRpcRequest()
 	if request.Method == "" {
 		rpcResponse := rpcConn.GetRpcResponse()
@@ -93,7 +92,7 @@ func TCPServiceHandller(tcpConn *TcpConn, data string, rpcConn *TcpRpcConnection
 			c()
 		}
 	} else { //rpc请求
-		Exec(rpcConn)
+		execHandler(rpcConn)
 	}
 
 }
@@ -367,26 +366,42 @@ func (c *TcpRpcConnection) Write() {
 	c.rpcResponse.Timestampin = c.rpcRequest.Timestampin
 	time := time.Now().UnixNano() / 1e6
 	c.rpcResponse.Timestampout = strconv.FormatInt(time, 10)
+
+	// 设置 result 和 error
+	if c.err != nil {
+		c.rpcResponse.Error.Set(500, c.err.Error())
+	} else if c.result != nil {
+		c.rpcResponse.Result = c.result
+	}
+
 	mjson, _ := json.Marshal(c.rpcResponse)
 	enddata := []byte{DATAEND}
 
-	var buffer bytes.Buffer //Buffer是一个实现了读写方法的可变大小的字节缓冲
+	var buffer bytes.Buffer
 
 	buffer.Write(mjson)
-	buffer.Write(enddata) //打上结束标签
+	buffer.Write(enddata)
 
-	b3 := buffer.Bytes() //得到了b1+b2的结果
+	b3 := buffer.Bytes()
 
 	c.conn.Write(b3)
 }
 
+func (c *TcpRpcConnection) SetResult(result interface{}) {
+	c.result = result
+}
+
+func (c *TcpRpcConnection) GetResult() interface{} {
+	return c.result
+}
+
 func (c *TcpRpcConnection) WriteResult(result interface{}) {
-	c.rpcResponse.Result = result
+	c.result = result
 	c.Write()
 }
 
-func (c *TcpRpcConnection) WriteResponse(rpcResponse Jsonrpcresponse) {
-	c.rpcResponse = &rpcResponse
+func (c *TcpRpcConnection) WriteResponse(resp Jsonrpcresponse) {
+	c.rpcResponse = &resp
 	c.Write()
 }
 
@@ -500,4 +515,33 @@ func (c *TcpRpcConnection) EnableHealthCheck() {
 }
 
 func (c *TcpRpcConnection) DisableHealthCheck() {
+}
+
+func (c *TcpRpcConnection) Context() context.Context {
+	if c.ctx != nil {
+		return c.ctx
+	}
+	return context.Background()
+}
+
+func (c *TcpRpcConnection) WithContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
+func (c *TcpRpcConnection) GetError() error {
+	return c.err
+}
+
+func (c *TcpRpcConnection) WithError(err error) {
+	c.err = err
+}
+
+func (c *TcpRpcConnection) Next() {
+	if c.nextFunc != nil {
+		c.nextFunc()
+	}
+}
+
+func (c *TcpRpcConnection) SetNextFunc(fn func()) {
+	c.nextFunc = fn
 }

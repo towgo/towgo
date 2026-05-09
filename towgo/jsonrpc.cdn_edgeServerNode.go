@@ -118,7 +118,7 @@ func (c *EdgeServerNode) connectHttpForever() {
 			client := NewHttpClient()
 			client.Call(c.EdgeServerNodeConfig.ServerHttpUrl, request, func(j Jsonrpcresponse) {
 				//ping后检查是否成功 不成功需要标记连接状态为断开重新进行注册
-				if j.Error.GetCode() != 200 {
+				if j.Error.Gegcode() != 200 {
 					isConnected = false
 					token = ""
 				}
