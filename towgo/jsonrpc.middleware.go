@@ -19,9 +19,6 @@ package towgo
 
 import (
 	"errors"
-	"log"
-
-	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
 )
 
@@ -38,11 +35,9 @@ var (
 // 默认 panic 处理器
 func DefaultRecoverHandler(conn JsonRpcConnection, v any) {
 	if err, ok := v.(error); ok && gerror.HasStack(err) {
-		log.Printf("err %+v \n", err)
 		conn.WithError(err)
 	} else {
-		log.Printf("recover exception %+v\n", gerror.NewCodef(gcode.CodeInternalPanic, "%+v", v))
-		conn.WithError(gerror.NewCodef(gcode.CodeInternalPanic, "%+v", v))
+		conn.WithError(gerror.Wrap(err, "recover exception"))
 	}
 }
 
