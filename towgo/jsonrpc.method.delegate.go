@@ -143,7 +143,6 @@ func http_jsonrpc_wrapper(w http.ResponseWriter, r *http.Request) {
 	err := defaultJsonRpcInterceptor(conn)
 	if err != nil {
 		conn.isConnected = false
-		log.Print(err.Error())
 		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
 	}
 	Exec(conn)
