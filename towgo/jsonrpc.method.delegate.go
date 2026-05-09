@@ -526,15 +526,15 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 			err = conn.ReadParams(&data)
 
 			if err != nil {
-				return err
+				return gerror.Wrap(err, `read params failed`)
 			}
 			err = mergeDefaultStructValue(fields, data, requestType)
 			if err != nil {
-				return err
+				return gerror.Wrap(err, `failed to merge default`)
 			}
 			err = gconv.Structs(data, pointer)
 			if err != nil {
-				return err
+				return gerror.Wrap(err, `invalid parameter`)
 			}
 
 		}
@@ -544,7 +544,7 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 			Data(pointer).
 			Assoc(data).
 			Run(conn.Context()); err != nil {
-			return err
+			return gerror.Wrap(err, `failed to validate pointer`)
 		}
 
 	// Multiple struct, it only supports JSON type post content like:
@@ -554,14 +554,14 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 		// so it uses `gjson` for the conversion.
 		marshal, err := json.Marshal(conn.GetRpcRequest().Params)
 		if err != nil {
-			return err
+			return gerror.Wrap(err, `failed to marshal rpc request`)
 		}
 		j, err := gjson.LoadContent(marshal)
 		if err != nil {
-			return err
+			return gerror.Wrap(err, `failed to unmarshal rpc request`)
 		}
 		if err = j.Var().Scan(pointer); err != nil {
-			return err
+			return gerror.Wrap(err, `failed to unmarshal rpc request`)
 		}
 		for i := 0; i < reflectVal2.Len(); i++ {
 			if err = gvalid.New().
@@ -569,7 +569,7 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 				Data(reflectVal2.Index(i)).
 				Assoc(j.Get(gconv.String(i)).Map()).
 				Run(conn.Context()); err != nil {
-				return err
+				return gerror.Wrap(err, `failed to validate pointer`)
 			}
 		}
 	}
