@@ -18,7 +18,6 @@ by:liangliangit
 package towgo
 
 import (
-	"errors"
 	"github.com/gogf/gf/v2/errors/gerror"
 )
 
@@ -35,7 +34,7 @@ var (
 // 默认 panic 处理器
 func DefaultRecoverHandler(conn JsonRpcConnection, v any) {
 	if err, ok := v.(error); ok && gerror.HasStack(err) {
-		conn.WithError(err)
+		conn.WithError(gerror.Wrap(err, "recover"))
 	} else {
 		conn.WithError(gerror.Wrap(err, "recover exception"))
 	}
@@ -91,7 +90,7 @@ func execHandler(conn JsonRpcConnection) {
 			// 执行 handler
 			req := conn.GetRpcRequest()
 			if req == nil || req.Method == "" {
-				conn.WithError(errors.New("method not found"))
+				conn.WithError(gerror.New("method not found"))
 				return
 			}
 			handler, ok := getHandler(req.Method)
@@ -101,7 +100,7 @@ func execHandler(conn JsonRpcConnection) {
 					api.Exec(conn)
 					return
 				}
-				conn.WithError(errors.New("method not found"))
+				conn.WithError(gerror.New("method not found"))
 				return
 			}
 			handler(conn)
