@@ -578,7 +578,9 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 
 // mergeDefaultStructValue merges the request parameters with default values from struct tag definition.
 func mergeDefaultStructValue(fields []gstructs.Field, data map[string]interface{}, pointer interface{}) error {
-
+	if len(fields) == 0 {
+		return nil
+	}
 	if len(fields) > 0 {
 		for _, field := range fields {
 			if tagValue := field.TagDefault(); tagValue != "" {
