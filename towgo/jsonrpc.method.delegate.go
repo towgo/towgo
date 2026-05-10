@@ -544,7 +544,7 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 			Data(pointer).
 			Assoc(data).
 			Run(conn.Context()); err != nil {
-			return err
+			return gerror.New(err.Error())
 		}
 
 	// Multiple struct, it only supports JSON type post content like:
@@ -569,7 +569,7 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 				Data(reflectVal2.Index(i)).
 				Assoc(j.Get(gconv.String(i)).Map()).
 				Run(conn.Context()); err != nil {
-				return err
+				return gerror.New(err.Error())
 			}
 		}
 	}
