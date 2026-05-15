@@ -37,6 +37,7 @@ var lock sync.Mutex
 var funcs map[string]*Api = map[string]*Api{}
 var lockedMethods sync.Map
 
+const Meta = "Meta"
 const (
 	parseTypeRequest = iota
 	parseTypeQuery
@@ -439,11 +440,12 @@ func checkAndCreateFuncInfo(
 	}
 	funcInfo.Path = gmetaPath
 	funcInfo.ReqStructFields = fields
-	funcInfo.Func = createRouterFunc(funcInfo, funcInfo.ReqStructFields)
+	funcInfo.Func = createRouterFunc(funcInfo, funcInfo.ReqStructFields, gmeta.Data(inputObjectPtr))
 	return
 }
-func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(conn JsonRpcConnection) {
+func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field, metaData map[string]string) func(conn JsonRpcConnection) {
 	return func(conn JsonRpcConnection) {
+		conn.WithContext(context.WithValue(conn.Context(), Meta, metaData))
 		var (
 			ok          bool
 			err         error
