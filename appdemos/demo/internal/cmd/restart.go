@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gogf/gf/v2/os/gcmd"
 	"github.com/gogf/gf/v2/os/glog"
-	"github.com/towgo/towgo/lib/processmanager"
+	"github.com/towgo/towgo/v2/lib/processmanager"
 )
 
 var Restart = gcmd.Command{

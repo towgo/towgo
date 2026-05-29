@@ -3,7 +3,7 @@ package identityObject
 import (
 	"errors"
 
-	"github.com/towgo/towgo/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
 )
 
 //身份管理器

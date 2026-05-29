@@ -2,8 +2,8 @@ package v1
 
 import (
 	"github.com/gogf/gf/v2/frame/g"
-	"github.com/towgo/towgo/appdemos/demo/internal/model"
-	"github.com/towgo/towgo/appdemos/demo/internal/model/entity"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/model"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/model/entity"
 )
 
 type GetListReq struct {

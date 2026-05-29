@@ -21,14 +21,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/lib/queue"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/queue"
+	"github.com/towgo/towgo/v2/lib/system"
 
-	"github.com/towgo/towgo/module/accountcenter"
-	"github.com/towgo/towgo/module/apibilling"
-	"github.com/towgo/towgo/module/iolog"
+	"github.com/towgo/towgo/v2/module/accountcenter"
+	"github.com/towgo/towgo/v2/module/apibilling"
+	"github.com/towgo/towgo/v2/module/iolog"
 )
 
 var contentTextArr [5]string

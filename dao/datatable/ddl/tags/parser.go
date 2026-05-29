@@ -13,8 +13,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/towgo/towgo/dao/datatable/ddl/dialects"
-	"github.com/towgo/towgo/dao/datatable/models"
+	"github.com/towgo/towgo/v2/dao/datatable/ddl/dialects"
+	"github.com/towgo/towgo/v2/dao/datatable/models"
 
 	"xorm.io/xorm/caches"
 	"xorm.io/xorm/convert"

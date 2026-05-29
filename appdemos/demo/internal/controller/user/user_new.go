@@ -5,8 +5,8 @@
 package user
 
 import (
-	"github.com/towgo/towgo/appdemos/demo/api/user"
-	user2 "github.com/towgo/towgo/appdemos/demo/internal/logic/user"
+	"github.com/towgo/towgo/v2/appdemos/demo/api/user"
+	user2 "github.com/towgo/towgo/v2/appdemos/demo/internal/logic/user"
 )
 
 type ControllerV1 struct {

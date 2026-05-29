@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"github.com/gogf/gf/v2/os/gcmd"
-	"github.com/towgo/towgo/lib/processmanager"
+	"github.com/towgo/towgo/v2/lib/processmanager"
 )
 
 var Start = gcmd.Command{

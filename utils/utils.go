@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 func GetUuid() string {

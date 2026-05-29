@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/towgo/towgo/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
 )
 
 type DepartmentNode struct {

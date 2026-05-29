@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/towgo/towgo/dao/datatable/ddl/tags/utils"
+	"github.com/towgo/towgo/v2/dao/datatable/ddl/tags/utils"
 
 	"xorm.io/xorm/names"
 	"xorm.io/xorm/schemas"

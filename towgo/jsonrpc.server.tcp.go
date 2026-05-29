@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 const (

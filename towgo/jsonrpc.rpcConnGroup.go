@@ -3,7 +3,7 @@ package towgo
 import (
 	"sync"
 
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 var defaultGroup *Group = &Group{}

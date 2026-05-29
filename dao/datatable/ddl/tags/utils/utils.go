@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
+	"github.com/towgo/towgo/v2/dao/ormDriver/xormDriver"
 )
 
 func GetAcTableName(tableName string) string {

@@ -1,8 +1,8 @@
 package licenseterminal
 
 import (
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/module/dblog"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/module/dblog"
 )
 
 var method string = "/license/terminal"

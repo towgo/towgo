@@ -3,11 +3,11 @@ package ormDriver
 import (
 	"encoding/json"
 	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/dao/ormDriver/gormDriver"
-	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
-	"github.com/towgo/towgo/os/tcfg"
-	"github.com/towgo/towgo/os/tlog"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/ormDriver/gormDriver"
+	"github.com/towgo/towgo/v2/dao/ormDriver/xormDriver"
+	"github.com/towgo/towgo/v2/os/tcfg"
+	"github.com/towgo/towgo/v2/os/tlog"
 )
 
 var dbCfg Config

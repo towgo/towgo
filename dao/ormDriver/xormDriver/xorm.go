@@ -10,7 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/towgo/towgo/os/tlog"
+	"github.com/towgo/towgo/v2/os/tlog"
 	"xorm.io/xorm"
 	dblog "xorm.io/xorm/log"
 	"xorm.io/xorm/names"

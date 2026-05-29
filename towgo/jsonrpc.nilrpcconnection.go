@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 type NilRpcConnection struct {

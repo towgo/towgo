@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
-	"github.com/towgo/towgo/lib/dlocker"
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/lib/system"
-	"github.com/towgo/towgo/module/accountcenter"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/ormDriver/xormDriver"
+	"github.com/towgo/towgo/v2/lib/dlocker"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/system"
+	"github.com/towgo/towgo/v2/module/accountcenter"
 )
 
 const (

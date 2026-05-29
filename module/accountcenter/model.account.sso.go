@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 var SsoTokenExpiredTime int64 = 10

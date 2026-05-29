@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/towgo/towgo/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
 	"unicode"
 )
 

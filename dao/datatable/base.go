@@ -3,7 +3,7 @@ package datatable
 import (
 	"sync"
 
-	"github.com/towgo/towgo/dao/datatable/engines"
+	"github.com/towgo/towgo/v2/dao/datatable/engines"
 )
 
 type TableOrmDriver struct {

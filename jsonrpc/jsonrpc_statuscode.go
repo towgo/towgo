@@ -1,10 +1,12 @@
 package jsonrpc
 
+// JSON-RPC status code constants mirror common HTTP status ranges plus project codes.
 const (
-	// JSONRPC状态码
+	// Informational status codes.
 	JSONRPC_100_CONTINUE            = 100
 	JSONRPC_101_SWITCHING_PROTOCOLS = 101
 
+	// Success status codes.
 	JSONRPC_200_OK                            = 200
 	JSONRPC_201_CREATED                       = 201
 	JSONRPC_202_ACCEPTED                      = 202
@@ -14,6 +16,7 @@ const (
 	JSONRPC_206_PARTIAL_CONTENT               = 206
 	JSONRPC_207_MULTI_STATUS                  = 207
 
+	// Redirect status codes.
 	JSONRPC_300_MULTIPLE_CHOICES   = 300
 	JSONRPC_301_MOVED_PERMANENTLY  = 301
 	JSONRPC_302_FOUND              = 302
@@ -23,6 +26,7 @@ const (
 	JSONRPC_306_RESERVED           = 306
 	JSONRPC_307_TEMPORARY_REDIRECT = 307
 
+	// Client error status codes.
 	JSONRPC_400_BAD_REQUEST                     = 400
 	JSONRPC_401_UNAUTHORIZED                    = 401
 	JSONRPC_402_PAYMENT_REQUIRED                = 402
@@ -50,6 +54,7 @@ const (
 	JSONRPC_431_REQUEST_HEADER_FIELDS_TOO_LARGE = 431
 	JSONRPC_451_UNAVAILABLE_FOR_LEGAL_REASONS   = 451
 
+	// Server error status codes.
 	JSONRPC_500_INTERNAL_SERVER_ERROR           = 500
 	JSONRPC_501_NOT_IMPLEMENTED                 = 501
 	JSONRPC_502_BAD_GATEWAY                     = 502
@@ -60,7 +65,7 @@ const (
 	JSONRPC_508_SERVICE_KNOWN_ERROR             = 508
 	JSONRPC_511_NETWORK_AUTHENTICATION_REQUIRED = 511
 
-	// # 自定义JSONRPC错误响应码
+	// Project process and configuration error status codes.
 	JSONRPC_600_INPUT_IS_EMPTY             = 600
 	JSONRPC_601_SERVER_NAME_EXIST          = 601
 	JSONRPC_602_FILE_NOT_EXIST             = 602
@@ -76,10 +81,13 @@ const (
 	JSONRPC_612_YAML_FORMAT_ERROR          = 612
 	JSONRPC_613_FORBIDDEN                  = 613
 
-	// # 数据库相关
+	// Project account error status codes.
 	JSONRPC_620_NO_SUCH_USER            = 620
 	JSONRPC_621_TWICE_PASSWORD_DIFFRENT = 621
 	JSONRPC_622_ACCOUNT_EXIST           = 622
 	JSONRPC_623_PERMISSION_DENIED       = 623
 	JSONRPC_624_EXP_TIME_ERROR          = 624
+
+	// Project route error status codes.
+	JSONRPC_700_ROUTE_DEVICE_NOT_FOUND = 700
 )

@@ -1,7 +1,7 @@
 package jurisdictionObject
 
 import (
-	"github.com/towgo/towgo/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
 )
 
 func TreeList(j Jurisdictions) []Jurisdictions {

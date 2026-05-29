@@ -4,10 +4,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
-	"github.com/towgo/towgo/module/accountcenter/identityObject"
-	"github.com/towgo/towgo/module/accountcenter/jurisdictionObject"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/ormDriver/xormDriver"
+	"github.com/towgo/towgo/v2/module/accountcenter/identityObject"
+	"github.com/towgo/towgo/v2/module/accountcenter/jurisdictionObject"
 )
 
 func initLoader() {

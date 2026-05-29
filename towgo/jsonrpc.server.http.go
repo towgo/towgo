@@ -19,13 +19,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 type HttpRpcConnection struct {
 	guid        string
 	httpwrapper bool
 	isConnected bool
+	written     bool
 	remoteAddr  string
 	rpcRequest  *Jsonrpcrequest
 	rpcResponse *Jsonrpcresponse
@@ -69,6 +70,7 @@ func (c *HttpRpcConnection) GetResult() interface{} {
 }
 
 func (c *HttpRpcConnection) Write() {
+	c.written = true
 	defer c.rpcRequest.ctxCancel()
 	if c.rpcResponse.Id == "" {
 		c.rpcResponse.Id = c.rpcRequest.Id
@@ -342,6 +344,16 @@ func (c *HttpRpcConnection) Next() {
 
 func (c *HttpRpcConnection) SetNextFunc(fn func()) {
 	c.Store("nextFunc", fn)
+}
+
+func (c *HttpRpcConnection) finish() {
+	defer func() {
+		c.isConnected = false
+	}()
+	execHandler(c)
+	if !c.written {
+		c.Write()
+	}
 }
 
 func parseQueryParams(r *http.Request, t reflect.Type) (interface{}, error) {

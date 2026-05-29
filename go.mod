@@ -1,4 +1,4 @@
-module github.com/towgo/towgo
+module github.com/towgo/towgo/v2
 
 go 1.25.0
 

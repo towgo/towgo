@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/towgo/towgo/module/dblog"
+	"github.com/towgo/towgo/v2/module/dblog"
 	"io"
 	"log"
 	"net"
@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 var accessCode string

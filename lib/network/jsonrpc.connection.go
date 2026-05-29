@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/lib/system"
-	"github.com/towgo/towgo/towgo"
+	"github.com/towgo/towgo/v2/lib/system"
+	"github.com/towgo/towgo/v2/towgo"
 )
 
 const (
@@ -95,7 +95,7 @@ func (c *ConnectionPipe) Push(method string, params any) error {
 	b = append(b, END_DATA)
 
 	//发送数据
-	_, err = c.conn.Write(b)
+	_, err = c.baseConn.Write(b)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (c *ConnectionPipe) Call(method string, params any, destResult any) error {
 	b = append(b, END_DATA)
 
 	//发送数据
-	_, err = c.conn.Write(b)
+	_, err = c.baseConn.Write(b)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,9 @@ func (c *ConnectionPipe) receiveJsonrpc(requestID string) (*towgo.Jsonrpcrespons
 		default:
 			resp, ok := c.rpcResponses.LoadAndDelete(requestID)
 			if ok {
-				resp.(*towgo.Jsonrpcresponse)
+				if rpcResponse, ok := resp.(*towgo.Jsonrpcresponse); ok {
+					return rpcResponse, nil
+				}
 			}
 			continue
 		}

@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/towgo/towgo/lib/system"
-	"github.com/towgo/towgo/module/dblog"
+	"github.com/towgo/towgo/v2/lib/system"
+	"github.com/towgo/towgo/v2/module/dblog"
 	"log"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/lib/sliceOperate"
-	"github.com/towgo/towgo/module/accountcenter/accountctx"
-	"github.com/towgo/towgo/module/accountcenter/identityObject"
-	// "github.com/towgo/towgo/module/dblog"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/sliceOperate"
+	"github.com/towgo/towgo/v2/module/accountcenter/accountctx"
+	"github.com/towgo/towgo/v2/module/accountcenter/identityObject"
+	// "github.com/towgo/towgo/v2/module/dblog"
 )
 
 func InitManageApi() {
@@ -362,7 +362,7 @@ func accountLogin(rpcConn jsonrpc.JsonRpcConnection) {
 				//	发邮件
 				request := rpcConn.GetRpcRequest()
 
-				msg := fmt.Sprintf("数字员工平台访问地址 : %s </br> 超级管理员 : %s 登录系统  </br> IP : %s </br>  时间: %s", request.Route, account.Nickname, rpcConn.GetRemoteAddr(), now.Format("2006-01-02 15:04:05"))
+				msg := fmt.Sprintf("数字员工平台访问地址 : %v </br> 超级管理员 : %s 登录系统  </br> IP : %s </br>  时间: %s", request.Route, account.Nickname, rpcConn.GetRemoteAddr(), now.Format("2006-01-02 15:04:05"))
 				var temp struct {
 					Email   []string `json:"email"`
 					Message string   `json:"message"`
@@ -524,7 +524,7 @@ func accountLogoff(rpcConn jsonrpc.JsonRpcConnection) {
 			if v.Code == "superadmin" {
 				now := time.Now()
 				request := rpcConn.GetRpcRequest()
-				msg := fmt.Sprintf("数字员工平台访问地址 : %s </br> 超级管理员 : %s 退出系统  </br> IP : %s </br>  时间: %s", request.Route, account.Nickname, rpcConn.GetRemoteAddr(), now.Format("2006-01-02 15:04:05"))
+				msg := fmt.Sprintf("数字员工平台访问地址 : %v </br> 超级管理员 : %s 退出系统  </br> IP : %s </br>  时间: %s", request.Route, account.Nickname, rpcConn.GetRemoteAddr(), now.Format("2006-01-02 15:04:05"))
 
 				//	发邮件
 				var temp struct {

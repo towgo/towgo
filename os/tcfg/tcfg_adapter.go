@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/towgo/towgo/os/tfile"
+	"github.com/towgo/towgo/v2/os/tfile"
 	"os"
 	"path/filepath"
 	"strconv"

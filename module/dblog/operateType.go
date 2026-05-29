@@ -1,8 +1,8 @@
 package dblog
 
 import (
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/api"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/api"
 	"log"
 	"strings"
 )

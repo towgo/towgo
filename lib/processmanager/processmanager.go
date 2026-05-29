@@ -9,10 +9,9 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"syscall"
 	"time"
 
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 type processManagerJson struct {
@@ -45,12 +44,7 @@ func (pm *processManager) getHandllerPid() (*processManagerJson, error) {
 	return &processManagerJson, nil
 }
 func (pmj *processManagerJson) isRuning() bool {
-
-	if err := syscall.Kill(pmj.Pid, 0); err == nil {
-		return true
-	}
-
-	return false
+	return isProcessRunning(pmj.Pid)
 }
 
 func fileExist(path string) bool {
@@ -116,7 +110,7 @@ func (pm *processManager) Stop() bool {
 	pmj, err := pm.getHandllerPid()
 	if err == nil {
 		if pmj.isRuning() {
-			syscall.Kill(pmj.Pid, syscall.SIGKILL)
+			_ = killProcess(pmj.Pid)
 			return true
 		}
 	}
@@ -127,7 +121,7 @@ func (pm *processManager) ReStart() bool {
 	pmj, err := pm.getHandllerPid()
 	if err == nil {
 		if pmj.isRuning() {
-			syscall.Kill(pmj.Pid, syscall.SIGKILL)
+			_ = killProcess(pmj.Pid)
 			time.Sleep(1 * time.Second)
 			if pm.Start() {
 				return true

@@ -16,7 +16,7 @@ import (
 
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/towgo/towgo/towgo"
+	"github.com/towgo/towgo/v2/towgo"
 )
 
 // ============================================================
@@ -168,6 +168,7 @@ func TestMiddleware_ExecutionOrder(t *testing.T) {
 
 	// 先清空已有中间件
 	// 注意：这会影响其他测试，生产环境中不要这样做
+	towgo.ResetForTest()
 	towgo.Middleware(func(conn towgo.JsonRpcConnection) {
 		order = append(order, "1-前")
 

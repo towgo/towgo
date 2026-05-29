@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/towgo/towgo/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
 )
 
 // 初始化SSO API

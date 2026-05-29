@@ -5,7 +5,7 @@
 package hello
 
 import (
-	"github.com/towgo/towgo/appdemos/demo/api/hello"
+	"github.com/towgo/towgo/v2/appdemos/demo/api/hello"
 )
 
 type ControllerV1 struct{}

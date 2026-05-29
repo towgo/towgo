@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"github.com/gogf/gf/v2/frame/g"
-	"github.com/towgo/towgo/appdemos/demo/internal/controller/hello"
-	"github.com/towgo/towgo/appdemos/demo/internal/controller/order"
-	"github.com/towgo/towgo/appdemos/demo/internal/controller/user"
-	"github.com/towgo/towgo/towgo"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/controller/hello"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/controller/order"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/controller/user"
+	"github.com/towgo/towgo/v2/towgo"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gogf/gf/v2/os/gcmd"
 	"github.com/gogf/gf/v2/os/glog"
-	"github.com/towgo/towgo/appdemos/demo/internal/migrations"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/migrations"
 )
 
 var DbSync = gcmd.Command{
