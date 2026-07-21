@@ -8,15 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"gorm.io/gorm/schema"
-
-	//"github.com/cengsin/oracle"
+	oracle "github.com/godoes/gorm-oracle"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 const (
@@ -94,33 +93,15 @@ func New(dsnConfigs []DsnConfig) {
 			},
 		)
 
-		var dbEngine *gorm.DB
-		var err error
-
-		switch v.DbType {
-		case "sqlite":
-			dbEngine, err = gorm.Open(sqlite.Open(v.Dsn), &gorm.Config{
-				Logger:         newLogger,
-				NamingStrategy: schema.NamingStrategy{SingularTable: true},
-			})
-		case "mysql":
-			dbEngine, err = gorm.Open(mysql.Open(v.Dsn), &gorm.Config{
-				Logger:         newLogger,
-				NamingStrategy: schema.NamingStrategy{SingularTable: true},
-			})
-		case "postgres":
-			dbEngine, err = gorm.Open(postgres.Open(v.Dsn), &gorm.Config{
-				Logger:         newLogger,
-				NamingStrategy: schema.NamingStrategy{SingularTable: true},
-			})
-		case "mssql":
-			dbEngine, err = gorm.Open(sqlserver.Open(v.Dsn), &gorm.Config{
-				Logger:         newLogger,
-				NamingStrategy: schema.NamingStrategy{SingularTable: true},
-			})
-		default:
-			err = errors.New("不支持的数据库类型")
+		dialector, err := resolveDialector(v.DbType, v.Dsn)
+		if err != nil {
+			log.Print(err.Error())
+			continue
 		}
+		dbEngine, err := gorm.Open(dialector, &gorm.Config{
+			Logger:         newLogger,
+			NamingStrategy: schema.NamingStrategy{SingularTable: true},
+		})
 		if err != nil {
 			log.Print(err.Error())
 			continue
@@ -153,6 +134,23 @@ func New(dsnConfigs []DsnConfig) {
 		}
 	}
 
+}
+
+func resolveDialector(dbType, dsn string) (gorm.Dialector, error) {
+	switch dbType {
+	case "sqlite":
+		return sqlite.Open(dsn), nil
+	case "mysql":
+		return mysql.Open(dsn), nil
+	case "postgres":
+		return postgres.Open(dsn), nil
+	case "mssql":
+		return sqlserver.Open(dsn), nil
+	case "oracle":
+		return oracle.Open(dsn), nil
+	default:
+		return nil, errors.New("不支持的数据库类型")
+	}
 }
 
 func Sync2(beans ...interface{}) {

@@ -10,6 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/sijms/go-ora/v2"
 	"github.com/towgo/towgo/os/tlog"
 	"xorm.io/xorm"
 	dblog "xorm.io/xorm/log"
@@ -69,21 +70,12 @@ func New(dsnConfigs []DsnConfig) {
 	Init()
 	for _, v := range dsnConfigs {
 
-		var dbEngine *xorm.Engine
-		var err error
-
-		switch v.DbType {
-		case "sqlite":
-			dbEngine, err = xorm.NewEngine("sqlite3", v.Dsn)
-		case "mysql":
-			dbEngine, err = xorm.NewEngine("mysql", v.Dsn)
-		case "postgres":
-			dbEngine, err = xorm.NewEngine("postgres", v.Dsn)
-		case "mssql":
-			dbEngine, err = xorm.NewEngine("mssql", v.Dsn)
-		default:
-			err = errors.New("不支持的数据库类型")
+		driverName, err := resolveDriverName(v.DbType)
+		if err != nil {
+			tlog.Print(err.Error())
+			continue
 		}
+		dbEngine, err := xorm.NewEngine(driverName, v.Dsn)
 
 		if err != nil {
 			tlog.Print(err.Error())
@@ -132,6 +124,17 @@ func New(dsnConfigs []DsnConfig) {
 		} else {
 			slaveDbs.Store(dbid, db)
 		}
+	}
+}
+
+func resolveDriverName(dbType string) (string, error) {
+	switch dbType {
+	case "sqlite":
+		return "sqlite3", nil
+	case "mysql", "postgres", "mssql", "oracle":
+		return dbType, nil
+	default:
+		return "", errors.New("不支持的数据库类型")
 	}
 }
 
