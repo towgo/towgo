@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/towgo/towgo/dao/ormDriver/gormDriver"
+	"github.com/towgo/towgo/v2/dao/ormDriver/gormDriver"
 
 	"gorm.io/gorm"
 )

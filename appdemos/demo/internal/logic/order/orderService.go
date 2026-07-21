@@ -2,9 +2,9 @@ package order
 
 import (
 	"context"
-	"github.com/towgo/towgo/appdemos/demo/internal/dao"
-	"github.com/towgo/towgo/appdemos/demo/internal/model"
-	"github.com/towgo/towgo/appdemos/demo/internal/model/entity"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/dao"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/model"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/model/entity"
 )
 
 type OrderService struct{}

@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/towgo/towgo/appdemos/demo/api/user/v1"
+	"github.com/towgo/towgo/v2/appdemos/demo/api/user/v1"
 )
 
 func (c *ControllerV1) Detail(ctx context.Context, req *v1.DetailReq) (res *v1.DetailRes, err error) {

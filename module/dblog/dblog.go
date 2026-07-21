@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/towgo/towgo/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
 )
 
 // 日志最长保留时间 单位秒

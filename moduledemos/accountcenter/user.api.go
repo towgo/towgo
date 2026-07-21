@@ -3,10 +3,10 @@ package accountcenter
 import (
 	"log"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
-	"github.com/towgo/towgo/lib/system"
-	"github.com/towgo/towgo/towgo"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/ormDriver/xormDriver"
+	"github.com/towgo/towgo/v2/lib/system"
+	"github.com/towgo/towgo/v2/towgo"
 )
 
 func init() {

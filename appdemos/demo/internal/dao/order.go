@@ -5,7 +5,7 @@
 package dao
 
 import (
-	"github.com/towgo/towgo/appdemos/demo/internal/dao/internal"
+	"github.com/towgo/towgo/v2/appdemos/demo/internal/dao/internal"
 )
 
 // internalOrderDao is internal type for wrapping internal DAO implements.

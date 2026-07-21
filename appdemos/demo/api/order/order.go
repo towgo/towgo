@@ -7,7 +7,7 @@ package order
 import (
 	"context"
 
-	"github.com/towgo/towgo/appdemos/demo/api/order/v1"
+	"github.com/towgo/towgo/v2/appdemos/demo/api/order/v1"
 )
 
 type IOrderV1 interface {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 	"io"
 	"log"
 	"os"

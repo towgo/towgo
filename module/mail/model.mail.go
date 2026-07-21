@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/jordan-wright/email"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 var mail *Mail

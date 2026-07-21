@@ -4,8 +4,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/lib/requestblocker"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/requestblocker"
 )
 
 var unauthorizedMethod map[string]bool = map[string]bool{}

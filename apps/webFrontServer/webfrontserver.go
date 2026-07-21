@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/towgo/towgo/lib/system"
-	"github.com/towgo/towgo/lib/www"
+	"github.com/towgo/towgo/v2/lib/system"
+	"github.com/towgo/towgo/v2/lib/www"
 )
 
 var basePath = system.GetPathOfProgram()

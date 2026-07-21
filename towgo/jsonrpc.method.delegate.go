@@ -21,8 +21,6 @@ import (
 	"github.com/gogf/gf/v2/util/gtag"
 	"github.com/gogf/gf/v2/util/gutil"
 	"github.com/gogf/gf/v2/util/gvalid"
-	"github.com/towgo/towgo/errors/tcode"
-	"github.com/towgo/towgo/errors/terror"
 	"log"
 	"net/http"
 	"reflect"
@@ -30,7 +28,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 // 委托任务列表
@@ -39,6 +37,7 @@ var lock sync.Mutex
 var funcs map[string]*Api = map[string]*Api{}
 var lockedMethods sync.Map
 
+const Meta = "Meta"
 const (
 	parseTypeRequest = iota
 	parseTypeQuery
@@ -49,10 +48,10 @@ var BeforExec func(rpcConn JsonRpcConnection)
 var AfterExec func(rpcConn JsonRpcConnection)
 var DefaultExec func(rpcConn JsonRpcConnection) = func(rpcConn JsonRpcConnection) {
 	if exception := recover(); exception != nil {
-		if v, ok := exception.(error); ok && terror.HasStack(v) {
+		if v, ok := exception.(error); ok && gerror.HasStack(v) {
 			log.Printf("err %+v \n", v)
 		} else {
-			log.Printf("recover exception %+v\n", terror.NewCodef(tcode.CodeInternalPanic, "%+v", exception))
+			log.Printf("recover exception %+v\n", gerror.NewCodef(gcode.CodeInternalPanic, "%+v", exception))
 		}
 		rpcConn.WriteError(500, DEFAULT_ERROR_MSG)
 	}
@@ -77,7 +76,7 @@ func (a *Api) Exec(rpcConn JsonRpcConnection) {
 	//运行拦截器
 	err := a.interceptor(rpcConn)
 	if err != nil {
-		rpcConn.WriteError(500, err.Error())
+		rpcConn.WithError(err)
 		return
 	}
 
@@ -143,7 +142,6 @@ func http_jsonrpc_wrapper(w http.ResponseWriter, r *http.Request) {
 	err := defaultJsonRpcInterceptor(conn)
 	if err != nil {
 		conn.isConnected = false
-		log.Print(err.Error())
 		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
 	}
 	Exec(conn)
@@ -442,16 +440,17 @@ func checkAndCreateFuncInfo(
 	}
 	funcInfo.Path = gmetaPath
 	funcInfo.ReqStructFields = fields
-	funcInfo.Func = createRouterFunc(funcInfo, funcInfo.ReqStructFields)
+	funcInfo.Func = createRouterFunc(funcInfo, funcInfo.ReqStructFields, gmeta.Data(inputObjectPtr))
 	return
 }
-func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(conn JsonRpcConnection) {
+func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field, metaData map[string]string) func(conn JsonRpcConnection) {
 	return func(conn JsonRpcConnection) {
+		conn.WithContext(context.WithValue(conn.Context(), Meta, metaData))
 		var (
 			ok          bool
 			err         error
 			inputValues = []reflect.Value{
-				reflect.ValueOf(conn.GetRpcRequest().ctx),
+				reflect.ValueOf(conn.Context()),
 			}
 		)
 		if funcInfo.Type.NumIn() == 2 {
@@ -465,7 +464,7 @@ func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(co
 				err = doParse(conn, fields, inputObject.Addr().Interface(), parseTypeRequest)
 			}
 			if err != nil {
-				conn.WriteError(500, err.Error())
+				conn.WithError(err)
 				return
 			}
 			inputValues = append(inputValues, inputObject)
@@ -476,7 +475,7 @@ func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(co
 		case 1:
 			if !results[0].IsNil() {
 				if err, ok = results[0].Interface().(error); ok {
-					conn.WriteError(500, err.Error())
+					conn.WithError(err)
 					return
 				}
 			}
@@ -484,12 +483,12 @@ func createRouterFunc(funcInfo handlerFuncInfo, fields []gstructs.Field) func(co
 		case 2:
 			if !results[1].IsNil() {
 				if err, ok = results[1].Interface().(error); ok {
-					conn.WriteError(500, err.Error())
+					conn.WithError(err)
 					return
 				}
 			}
 			result := results[0].Interface()
-			conn.WriteResult(result)
+			conn.SetResult(result)
 			return
 		}
 	}
@@ -529,15 +528,15 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 			err = conn.ReadParams(&data)
 
 			if err != nil {
-				return err
+				return gerror.Wrap(err, `read params failed`)
 			}
 			err = mergeDefaultStructValue(fields, data, requestType)
 			if err != nil {
-				return err
+				return gerror.Wrap(err, `failed to merge default`)
 			}
 			err = gconv.Structs(data, pointer)
 			if err != nil {
-				return err
+				return gerror.Wrap(err, `invalid parameter`)
 			}
 
 		}
@@ -546,8 +545,8 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 			Bail().
 			Data(pointer).
 			Assoc(data).
-			Run(conn.GetRpcRequest().ctx); err != nil {
-			return err
+			Run(conn.Context()); err != nil {
+			return gerror.New(err.Error())
 		}
 
 	// Multiple struct, it only supports JSON type post content like:
@@ -557,22 +556,22 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 		// so it uses `gjson` for the conversion.
 		marshal, err := json.Marshal(conn.GetRpcRequest().Params)
 		if err != nil {
-			return err
+			return gerror.Wrap(err, `failed to marshal rpc request`)
 		}
 		j, err := gjson.LoadContent(marshal)
 		if err != nil {
-			return err
+			return gerror.Wrap(err, `failed to unmarshal rpc request`)
 		}
 		if err = j.Var().Scan(pointer); err != nil {
-			return err
+			return gerror.Wrap(err, `failed to unmarshal rpc request`)
 		}
 		for i := 0; i < reflectVal2.Len(); i++ {
 			if err = gvalid.New().
 				Bail().
 				Data(reflectVal2.Index(i)).
 				Assoc(j.Get(gconv.String(i)).Map()).
-				Run(conn.GetRpcRequest().ctx); err != nil {
-				return err
+				Run(conn.Context()); err != nil {
+				return gerror.New(err.Error())
 			}
 		}
 	}
@@ -581,7 +580,9 @@ func doParse(conn JsonRpcConnection, fields []gstructs.Field, pointer interface{
 
 // mergeDefaultStructValue merges the request parameters with default values from struct tag definition.
 func mergeDefaultStructValue(fields []gstructs.Field, data map[string]interface{}, pointer interface{}) error {
-
+	if len(fields) == 0 {
+		return nil
+	}
 	if len(fields) > 0 {
 		for _, field := range fields {
 			if tagValue := field.TagDefault(); tagValue != "" {
@@ -594,7 +595,7 @@ func mergeDefaultStructValue(fields []gstructs.Field, data map[string]interface{
 	// provide non strict routing
 	tagFields, err := gstructs.TagFields(pointer, []string{gtag.DefaultShort, gtag.Default})
 	if err != nil {
-		return err
+		return gerror.Wrap(err, `tag field "default" failed`)
 	}
 	if len(tagFields) > 0 {
 		for _, field := range tagFields {

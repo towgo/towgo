@@ -1,6 +1,6 @@
 package accountcenter
 
-import "github.com/towgo/towgo/dao/basedboperat"
+import "github.com/towgo/towgo/v2/dao/basedboperat"
 
 func (Userinfo) TableName() string {
 	return "userinfo"

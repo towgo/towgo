@@ -1,6 +1,6 @@
 package engines
 
-import "github.com/towgo/towgo/dao/datatable/models"
+import "github.com/towgo/towgo/v2/dao/datatable/models"
 
 type Gorm struct{}
 

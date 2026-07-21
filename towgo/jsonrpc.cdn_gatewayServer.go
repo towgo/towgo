@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/lib/www"
+	"github.com/towgo/towgo/v2/lib/www"
 )
 
 var API_HEAD = "towgocdn"

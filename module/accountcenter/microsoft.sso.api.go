@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/towgo/towgo/lib/microsoftsso"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/microsoftsso"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 var ssologin_template_path string

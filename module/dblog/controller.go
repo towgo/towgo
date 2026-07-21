@@ -3,7 +3,7 @@ package dblog
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/towgo/towgo/towgo"
+	"github.com/towgo/towgo/v2/towgo"
 	"io"
 	"log"
 	"net/http"
@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/system"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -117,17 +117,17 @@ func downloadLogFile(w http.ResponseWriter, req *http.Request) {
 	if downloadLogFileReq.StartTime != 0 {
 		args = append(args, downloadLogFileReq.StartTime)
 		if !strings.Contains(sql, "where") {
-			sql = fmt.Sprintf(sql + " where created_at > ?")
+			sql += " where created_at > ?"
 		} else {
-			sql = fmt.Sprintf(sql + " and created_at > ?")
+			sql += " and created_at > ?"
 		}
 	}
 	if downloadLogFileReq.EndTime != 0 {
 		args = append(args, downloadLogFileReq.EndTime)
 		if !strings.Contains(sql, "where") {
-			sql = fmt.Sprintf(sql + " where created_at < ?")
+			sql += " where created_at < ?"
 		} else {
-			sql = fmt.Sprintf(sql + " and created_at < ?")
+			sql += " and created_at < ?"
 		}
 	}
 	sql = sql + " ORDER BY id desc"

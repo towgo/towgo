@@ -1,7 +1,7 @@
 package tcfg
 
 import (
-	"github.com/towgo/towgo/errors/terror"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"log"
 )
 
@@ -72,7 +72,7 @@ func (c *Config) Data() map[string]interface{} {
 // "x.0.y" for slice item.
 func (c *Config) Get(pattern string) (interface{}, error) {
 	if c.adapter == nil {
-		return nil, terror.New("adapter is nil")
+		return nil, gerror.New("adapter is nil")
 	}
 	return c.adapter.Get(pattern)
 }

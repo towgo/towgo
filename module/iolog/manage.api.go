@@ -1,9 +1,9 @@
 package iolog
 
 import (
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/module/dblog"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/module/dblog"
 )
 
 func InitManageApi() {

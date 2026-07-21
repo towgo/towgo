@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 // 缓存有效期

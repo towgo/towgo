@@ -7,12 +7,12 @@ import (
 	// "log"
 
 	"github.com/go-ldap/ldap/v3"
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/lib/system"
-	"github.com/towgo/towgo/module/accountcenter/identityObject"
-	"github.com/towgo/towgo/module/accountcenter/jurisdictionObject"
-	"github.com/towgo/towgo/utils"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/system"
+	"github.com/towgo/towgo/v2/module/accountcenter/identityObject"
+	"github.com/towgo/towgo/v2/module/accountcenter/jurisdictionObject"
+	"github.com/towgo/towgo/v2/utils"
 )
 
 func (Account) TableName() string {

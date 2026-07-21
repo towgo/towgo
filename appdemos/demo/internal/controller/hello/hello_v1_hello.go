@@ -6,7 +6,7 @@ import (
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
 
-	"github.com/towgo/towgo/appdemos/demo/api/hello/v1"
+	"github.com/towgo/towgo/v2/appdemos/demo/api/hello/v1"
 )
 
 func (c *ControllerV1) Hello(ctx context.Context, req *v1.HelloReq) (res *v1.HelloRes, err error) {

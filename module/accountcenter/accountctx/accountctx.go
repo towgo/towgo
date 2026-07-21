@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/towgo/towgo/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
 )
 
 type ctxKey string

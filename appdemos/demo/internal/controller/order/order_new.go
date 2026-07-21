@@ -5,8 +5,8 @@
 package order
 
 import (
-	"github.com/towgo/towgo/appdemos/demo/api/order"
-	order2 "github.com/towgo/towgo/appdemos/demo/internal/logic/order"
+	"github.com/towgo/towgo/v2/appdemos/demo/api/order"
+	order2 "github.com/towgo/towgo/v2/appdemos/demo/internal/logic/order"
 )
 
 type ControllerV1 struct {

@@ -2,19 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/towgo/towgo/dao/basedboperat"
-	"github.com/towgo/towgo/dao/ormDriver/gormDriver"
-	"github.com/towgo/towgo/dao/ormDriver/xormDriver"
-	"github.com/towgo/towgo/module/accountcenter"
-	"github.com/towgo/towgo/os/tcfg"
+	"github.com/towgo/towgo/v2/dao/basedboperat"
+	"github.com/towgo/towgo/v2/dao/ormDriver/gormDriver"
+	"github.com/towgo/towgo/v2/dao/ormDriver/xormDriver"
+	"github.com/towgo/towgo/v2/module/accountcenter"
+	"github.com/towgo/towgo/v2/os/tcfg"
 	"log"
 	"net/http"
 	"os"
 
-	// "github.com/towgo/towgo/lib/api"
-	"github.com/towgo/towgo/lib/jsonrpc"
-	"github.com/towgo/towgo/lib/processmanager"
-	"github.com/towgo/towgo/lib/www"
+	// "github.com/towgo/towgo/v2/lib/api"
+	"github.com/towgo/towgo/v2/lib/jsonrpc"
+	"github.com/towgo/towgo/v2/lib/processmanager"
+	"github.com/towgo/towgo/v2/lib/www"
 )
 
 // var basePath = system.GetPathOfProgram()

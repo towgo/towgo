@@ -7,7 +7,7 @@ package hello
 import (
 	"context"
 
-	"github.com/towgo/towgo/appdemos/demo/api/hello/v1"
+	"github.com/towgo/towgo/v2/appdemos/demo/api/hello/v1"
 )
 
 type IHelloV1 interface {

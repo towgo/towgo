@@ -6,6 +6,7 @@ ver 1.0
 package towgo
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,13 +19,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towgo/towgo/lib/system"
+	"github.com/towgo/towgo/v2/lib/system"
 )
 
 type HttpRpcConnection struct {
 	guid        string
 	httpwrapper bool
 	isConnected bool
+	written     bool
 	remoteAddr  string
 	rpcRequest  *Jsonrpcrequest
 	rpcResponse *Jsonrpcresponse
@@ -33,6 +35,9 @@ type HttpRpcConnection struct {
 	bodyStr     string
 	paramsBytes []byte
 	resultBytes []byte
+	result      interface{}
+	err         error
+	ctx         context.Context
 	sync.Map
 }
 
@@ -56,7 +61,16 @@ func (c *HttpRpcConnection) GetRpcResponse() *Jsonrpcresponse {
 	return c.rpcResponse
 }
 
+func (c *HttpRpcConnection) SetResult(result interface{}) {
+	c.result = result
+}
+
+func (c *HttpRpcConnection) GetResult() interface{} {
+	return c.result
+}
+
 func (c *HttpRpcConnection) Write() {
+	c.written = true
 	defer c.rpcRequest.ctxCancel()
 	if c.rpcResponse.Id == "" {
 		c.rpcResponse.Id = c.rpcRequest.Id
@@ -64,6 +78,13 @@ func (c *HttpRpcConnection) Write() {
 	c.rpcResponse.Timestampin = c.rpcRequest.Timestampin
 	time := time.Now().UnixNano() / 1e6
 	c.rpcResponse.Timestampout = strconv.FormatInt(time, 10)
+
+	// 设置 result 和 error
+	if c.err != nil {
+		c.rpcResponse.Error.Set(500, c.err.Error())
+	} else if c.result != nil {
+		c.rpcResponse.Result = c.result
+	}
 
 	var mjson []byte
 
@@ -88,12 +109,12 @@ func (c *HttpRpcConnection) Write() {
 }
 
 func (c *HttpRpcConnection) WriteResult(result interface{}) {
-	c.rpcResponse.Result = result
+	c.result = result
 	c.Write()
 }
 
-func (c *HttpRpcConnection) WriteResponse(rpcResponse Jsonrpcresponse) {
-	c.rpcResponse = &rpcResponse
+func (c *HttpRpcConnection) WriteResponse(resp Jsonrpcresponse) {
+	c.rpcResponse = &resp
 	c.Write()
 }
 
@@ -265,22 +286,12 @@ func HttpHandller(w http.ResponseWriter, r *http.Request) {
 
 	rpcConn := NewHttpRpcConnection(w, r)
 
-	defer DefaultExec(rpcConn)
+	defer execHandler(rpcConn)
 
 	if rpcConn == nil {
 		return
 	}
 	rpcConn.isConnected = true
-
-	//运行拦截器
-	err := defaultJsonRpcInterceptor(rpcConn)
-	if err != nil {
-		rpcConn.isConnected = false
-		log.Print(err.Error())
-		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
-	}
-	//未被拦截 调用rpc方法
-	Exec(rpcConn)
 	rpcConn.isConnected = false //http是断链接  调用完RPC后默认连接关闭
 }
 
@@ -302,6 +313,47 @@ func (c *HttpRpcConnection) EnableHealthCheck() {
 
 func (c *HttpRpcConnection) DisableHealthCheck() {
 	log.Print("http protocol is not support DisableHealthCheck function")
+}
+
+func (c *HttpRpcConnection) Context() context.Context {
+	if c.ctx != nil {
+		return c.ctx
+	}
+	return context.Background()
+}
+
+func (c *HttpRpcConnection) WithContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
+func (c *HttpRpcConnection) GetError() error {
+	return c.err
+}
+
+func (c *HttpRpcConnection) WithError(err error) {
+	c.err = err
+}
+
+func (c *HttpRpcConnection) Next() {
+	if fn, ok := c.Load("nextFunc"); ok {
+		if next, ok := fn.(func()); ok {
+			next()
+		}
+	}
+}
+
+func (c *HttpRpcConnection) SetNextFunc(fn func()) {
+	c.Store("nextFunc", fn)
+}
+
+func (c *HttpRpcConnection) finish() {
+	defer func() {
+		c.isConnected = false
+	}()
+	execHandler(c)
+	if !c.written {
+		c.Write()
+	}
 }
 
 func parseQueryParams(r *http.Request, t reflect.Type) (interface{}, error) {
@@ -369,21 +421,11 @@ func GhttpHandler(r *ghttp.Request) {
 
 	rpcConn := NewHttpRpcConnection(w, r.Request)
 
-	defer DefaultExec(rpcConn)
+	defer execHandler(rpcConn)
 
 	if rpcConn == nil {
 		return
 	}
 	rpcConn.isConnected = true
-
-	//运行拦截器
-	err := defaultJsonRpcInterceptor(rpcConn)
-	if err != nil {
-		rpcConn.isConnected = false
-		log.Print(err.Error())
-		return //拦截后 rpc响应由拦截器处理，  不需要再次响应
-	}
-	//未被拦截 调用rpc方法
-	Exec(rpcConn)
 	rpcConn.isConnected = false //http是断链接  调用完RPC后默认连接关闭
 }

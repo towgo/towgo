@@ -1,15 +1,16 @@
 package tcfg
 
 import (
-	"github.com/towgo/towgo/lib/utils"
+	"github.com/towgo/towgo/v2/lib/utils"
 	"log"
+	"path/filepath"
 	"testing"
 )
 
 // TestNewAdapter 测试 Adapter 创建功能
 func TestNewAdapter(t *testing.T) {
 
-	adapter, err := NewAdapter()
+	adapter, err := NewAdapter(filepath.Join("testdata", "config", "config.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
